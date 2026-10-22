@@ -1,0 +1,6 @@
+# test exports PUT to the dev server
+tools/uploads/
+# audio and S-4 project dumps stay out of the repo
+*.wav
+*.s4project/
+__pycache__/

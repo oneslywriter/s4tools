@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>s4tools guide</title>
+  <meta name="description" content="How to use s4tools with the Torso S-4: playing it live, learning a MIDI controller, recording, and building projects from your own samples.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 18 18%22%3E%3Crect x=%221%22 y=%221%22 width=%227%22 height=%227%22 rx=%222%22 fill=%22%23e4572e%22/%3E%3Crect x=%2210%22 y=%221%22 width=%227%22 height=%227%22 rx=%223.5%22 fill=%22%23c98a12%22/%3E%3Crect x=%221%22 y=%2210%22 width=%227%22 height=%227%22 rx=%223.5%22 fill=%22%2316907c%22/%3E%3Crect x=%2210%22 y=%2210%22 width=%227%22 height=%227%22 rx=%222%22 fill=%22%236a58c9%22/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../css/themes.css">
+  <script>
+    // the app's theme (Settings > Theme), before anything is drawn; "system" follows the OS
+    (function () {
+      const apply = () => {
+        let t = 'system';
+        try { t = JSON.parse(localStorage.getItem('s4tools.theme') || '"system"'); } catch (e) { /* the default */ }
+        document.documentElement.dataset.theme = t === 'system' || !t ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : t;
+      };
+      apply();
+      matchMedia('(prefers-color-scheme: dark)').addEventListener('change', apply);
+      addEventListener('storage', e => { if (e.key === 's4tools.theme') apply(); });
+    })();
+  </script>
+  <style>
+    /* the colours are the app's (css/themes.css) */
+    :root { --sans: 'IBM Plex Sans', ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif; --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace; }
+    * { box-sizing: border-box; }
+    html { scroll-padding-top: 72px; }
+    body { margin: 0; background: var(--bg); color: var(--ink2); font: 16px/1.65 var(--sans); -webkit-font-smoothing: antialiased; }
+    header { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 16px;
+      background: var(--bg); border-bottom: 1px solid var(--rule); }
+    header a { color: var(--ink); text-decoration: none; }
+    .mark { display: inline-flex; align-items: center; gap: 9px; font-weight: 600; font-size: 18px; letter-spacing: -.01em; }
+    .mark svg { width: 20px; height: 20px; }
+    .mark span { color: var(--mute); font-weight: 500; }
+    header .sp { flex: 1; }
+    header .open { padding: 6px 14px; border: 1px solid var(--ink); border-radius: 6px; font-size: 14px; font-weight: 500; background: var(--ink); color: var(--bg); }
+    header .open:hover { opacity: .85; }
+    main { max-width: 760px; margin: 0 auto; padding: 28px 16px 96px; }
+    h1, h2, h3, h4 { color: var(--ink); }
+    h1 { font-size: 34px; line-height: 1.15; letter-spacing: -.02em; margin: 16px 0 18px; }
+    h2 { font-size: 23px; letter-spacing: -.01em; margin: 48px 0 12px; padding-left: 12px; border-left: 4px solid var(--t1); }
+    h2:nth-of-type(4n+2) { border-color: var(--t2); }
+    h2:nth-of-type(4n+3) { border-color: var(--t3); }
+    h2:nth-of-type(4n) { border-color: var(--t4); }
+    h3 { font-size: 18px; margin: 32px 0 8px; }
+    h4, h5, h6 { font-size: 16px; margin: 22px 0 6px; }
+    p { margin: 10px 0; }
+    a { color: var(--learn); }
+    strong { font-weight: 600; color: var(--ink); }
+    ul, ol { margin: 8px 0; padding-left: 24px; }
+    li { margin: 4px 0; }
+    li > ul, li > ol { margin: 4px 0; }
+    hr { border: 0; border-top: 1px solid var(--rule); margin: 40px 0; }
+    code { font-family: var(--mono); font-size: .86em; padding: 1px 5px; border-radius: 4px; background: var(--card); border: 1px solid var(--rule); }
+    pre { padding: 12px 14px; border-radius: 8px; background: var(--card); border: 1px solid var(--rule); overflow-x: auto; }
+    pre code { padding: 0; border: 0; background: none; font-size: 13px; }
+    blockquote { margin: 14px 0; padding: 8px 16px; border-left: 3px solid var(--t3); background: var(--card); border-radius: 0 8px 8px 0; }
+    blockquote p { margin: 4px 0; }
+    .tbl { overflow-x: auto; margin: 14px 0; border: 1px solid var(--rule); border-radius: 8px; background: var(--card); }
+    table { border-collapse: collapse; width: 100%; font-size: 15px; }
+    th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--rule); }
+    th { color: var(--ink2); font-weight: 600; font-size: 13px; }
+    tr:last-child td { border-bottom: 0; }
+    .msg { color: var(--mute); }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="mark" href="../" title="Open s4tools">
+      <svg viewBox="0 0 18 18" aria-hidden="true"><rect x="1" y="1" width="7" height="7" rx="2" fill="var(--t1)"/><rect x="10" y="1" width="7" height="7" rx="3.5" fill="var(--t2)"/><rect x="1" y="10" width="7" height="7" rx="3.5" fill="var(--t3)"/><rect x="10" y="10" width="7" height="7" rx="2" fill="var(--t4)"/></svg>
+      s4tools <span>guide</span>
+    </a>
+    <span class="sp"></span>
+    <a class="open" href="../">Open s4tools</a>
+  </header>
+  <main id="guide"><p class="msg">Loading the guide…</p></main>
+  <script>
+    'use strict';
+    // Renders GUIDE.md (next to this page) with the Markdown the guide uses: headings with anchors, paragraphs, nested
+    // lists, tables, quotes, rules, code, links, bold and italic. GUIDE.md is the one source.
+    const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    // heading anchors: lower case, punctuation dropped, spaces to hyphens
+    const slug = s => s.replace(/[`*_[\]()]/g, '').toLowerCase().replace(/[^\w\- ]+/g, '').replace(/ /g, '-');
+
+    function inline(s) {
+      const codes = [];
+      s = s.replace(/`([^`]+)`/g, (_, c) => { codes.push(c); return `\u0000${codes.length - 1}\u0000`; });
+      s = esc(s);
+      s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, text, url) => {
+        const ext = /^https?:/.test(url);
+        return `<a href="${url}"${ext ? ' target="_blank" rel="noopener"' : ''}>${text}</a>`;
+      });
+      s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      s = s.replace(/(^|[^*\w])\*([^*\s][^*]*?)\*(?![*\w])/g, '$1<em>$2</em>');
+      return s.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${esc(codes[+i])}</code>`);
+    }
+
+    const LIST = /^(\s*)([-*]|\d+\.)\s+(.*)$/;
+    const indent = l => l.match(/^\s*/)[0].length;
+    function list(lines) {
+      const base = indent(lines[0]), first = LIST.exec(lines[0]), ordered = /\d/.test(first[2]);
+      let html = ordered ? `<ol${+first[2] !== 1 ? ` start="${parseInt(first[2], 10)}"` : ''}>` : '<ul>', i = 0;
+      while (i < lines.length) {
+        const m = LIST.exec(lines[i]);
+        const text = m ? m[3] : lines[i].trim();
+        i++;
+        const kids = [];
+        while (i < lines.length && indent(lines[i]) > base) kids.push(lines[i++]);
+        const sub = kids.length && LIST.test(kids[0]) ? list(kids) : kids.length ? ' ' + inline(kids.map(k => k.trim()).join(' ')) : '';
+        html += `<li>${inline(text)}${sub}</li>`;
+      }
+      return html + (ordered ? '</ol>' : '</ul>');
+    }
+
+    const cells = l => l.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
+    function render(md) {
+      const lines = md.replace(/\r\n?/g, '\n').split('\n'), out = [];
+      const blockStart = l => /^(#{1,6}\s|```|>|\||(-{3,}|\*{3,})\s*$)/.test(l) || LIST.test(l);
+      let i = 0;
+      while (i < lines.length) {
+        const l = lines[i];
+        let m;
+        if (!l.trim()) { i++; continue; }
+        if (/^```/.test(l)) {
+          const buf = [];
+          for (i++; i < lines.length && !/^```/.test(lines[i]); i++) buf.push(lines[i]);
+          i++;
+          out.push(`<pre><code>${esc(buf.join('\n'))}</code></pre>`);
+        } else if ((m = /^(#{1,6})\s+(.*)$/.exec(l))) {
+          out.push(`<h${m[1].length} id="${slug(m[2])}">${inline(m[2])}</h${m[1].length}>`);
+          i++;
+        } else if (/^(-{3,}|\*{3,})\s*$/.test(l)) {
+          out.push('<hr>');
+          i++;
+        } else if (/^>/.test(l)) {
+          const buf = [];
+          while (i < lines.length && /^>/.test(lines[i])) buf.push(lines[i++].replace(/^>\s?/, ''));
+          out.push(`<blockquote>${render(buf.join('\n'))}</blockquote>`);
+        } else if (/^\|/.test(l) && /^\|?\s*:?-{3,}/.test(lines[i + 1] || '')) {
+          const head = cells(l);
+          i += 2;
+          const rows = [];
+          while (i < lines.length && /^\|/.test(lines[i])) rows.push(cells(lines[i++]));
+          const th = head.some(Boolean) ? `<thead><tr>${head.map(c => `<th>${inline(c)}</th>`).join('')}</tr></thead>` : '';
+          out.push(`<div class="tbl"><table>${th}<tbody>${rows.map(r => `<tr>${r.map(c => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
+        } else if (LIST.test(l) && indent(l) === 0) {
+          const buf = [];
+          while (i < lines.length && lines[i].trim() && (LIST.test(lines[i]) || indent(lines[i]) > 0)) buf.push(lines[i++]);
+          out.push(list(buf));
+        } else {
+          const buf = [];
+          while (i < lines.length && lines[i].trim() && !blockStart(lines[i])) buf.push(lines[i++].trim());
+          if (!buf.length) buf.push(lines[i++].trim()); // a line no rule claims
+          out.push(`<p>${inline(buf.join(' '))}</p>`);
+        }
+      }
+      return out.join('\n');
+    }
+
+    fetch('GUIDE.md', { cache: 'no-cache' }).then(r => {
+      if (!r.ok) throw new Error(r.status + ' ' + r.statusText);
+      return r.text();
+    }).then(md => {
+      const el = document.getElementById('guide');
+      el.innerHTML = render(md);
+      if (location.hash) { const t = document.getElementById(decodeURIComponent(location.hash.slice(1))); if (t) t.scrollIntoView(); }
+    }).catch(e => {
+      document.getElementById('guide').innerHTML = `<p class="msg">The guide didn't load (${esc(e.message)}). The same text is in docs/GUIDE.md.</p>`;
+    });
+  </script>
+</body>
+</html>

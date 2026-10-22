@@ -1,0 +1,65 @@
+/* s4tools colour themes. Every colour in the app and the guide comes from these tokens. The page gets
+   data-theme="<id>" before it is drawn (index.html, docs/guide.html); "system" picks light or dark from the OS.
+   A theme also applies to any element carrying the attribute, so Settings can preview each one in place.
+   --t1..--t4 are the tracks; --on-t is text on a track colour, --on-accent text on --learn / --ok / --warn / --err /
+   --rec fills; --scrim is behind dialogs. */
+
+/* Paper: warm off-white, ink lines (the default) */
+:root, [data-theme="light"] {
+  --bg: #f3efe6; --card: #fbf8f2; --card2: #f6f2e9; --field: #ffffff; --sel: #ebe4d4;
+  --ink: #1d1b18; --ink2: #4b463e; --mute: #857e72; --faint: #b3ab9c; --rule: #e0d9ca; --rule2: #cdc4b1;
+  --t1: #e4572e; --t2: #b47a0e; --t3: #16907c; --t4: #6a58c9; --on-t: #ffffff;
+  --ok: #2c9a58; --warn: #b87d0f; --err: #d24a32; --rec: #e0452a; --learn: #3a64d8; --on-accent: #ffffff;
+  --shadow: 0 14px 40px rgba(60, 48, 30, .18); --scrim: rgba(40, 32, 20, .35);
+  color-scheme: light;
+}
+
+/* Night: the paper theme after dark */
+[data-theme="dark"] {
+  --bg: #191815; --card: #211f1b; --card2: #262420; --field: #1c1a17; --sel: #2f2c26;
+  --ink: #ece6da; --ink2: #c9c1b2; --mute: #8f887b; --faint: #5d574d; --rule: #322f29; --rule2: #443f37;
+  --t1: #f2704a; --t2: #e2a73a; --t3: #2fb59d; --t4: #8d7ee6; --on-t: #191815;
+  --ok: #4cc07c; --warn: #e2a73a; --err: #ee6a52; --rec: #f0553c; --learn: #7a9cff; --on-accent: #14120f;
+  --shadow: 0 14px 40px rgba(0, 0, 0, .5); --scrim: rgba(0, 0, 0, .55);
+  color-scheme: dark;
+}
+
+/* Mono: shades of grey on near-black; colour only where it means something (record, errors, connected) */
+[data-theme="mono"] {
+  --bg: #111111; --card: #191919; --card2: #1e1e1e; --field: #0c0c0c; --sel: #292929;
+  --ink: #ededed; --ink2: #c2c2c2; --mute: #8e8e8e; --faint: #5e5e5e; --rule: #282828; --rule2: #3a3a3a;
+  --t1: #f4f4f4; --t2: #cacaca; --t3: #a2a2a2; --t4: #7c7c7c; --on-t: #111111;
+  --ok: #7cc99a; --warn: #d4c08e; --err: #ff6b5e; --rec: #ff5146; --learn: #dcdcdc; --on-accent: #111111;
+  --shadow: 0 14px 40px rgba(0, 0, 0, .6); --scrim: rgba(0, 0, 0, .6);
+  color-scheme: dark;
+}
+
+/* Chalk: shades of grey on white */
+[data-theme="chalk"] {
+  --bg: #eeeeee; --card: #f8f8f8; --card2: #f2f2f2; --field: #ffffff; --sel: #e1e1e1;
+  --ink: #141414; --ink2: #424242; --mute: #767676; --faint: #a9a9a9; --rule: #dcdcdc; --rule2: #c4c4c4;
+  --t1: #141414; --t2: #454545; --t3: #6c6c6c; --t4: #8c8c8c; --on-t: #ffffff;
+  --ok: #2e8b57; --warn: #9a7414; --err: #c4392b; --rec: #d63a2b; --learn: #262626; --on-accent: #ffffff;
+  --shadow: 0 14px 40px rgba(0, 0, 0, .14); --scrim: rgba(0, 0, 0, .3);
+  color-scheme: light;
+}
+
+/* Slate: cool blue-grey, bright tracks */
+[data-theme="slate"] {
+  --bg: #12161c; --card: #19202a; --card2: #1d2531; --field: #0f141a; --sel: #243041;
+  --ink: #e6edf5; --ink2: #b7c3d1; --mute: #7d8a9a; --faint: #4c5868; --rule: #233040; --rule2: #314157;
+  --t1: #ff7a59; --t2: #ffc857; --t3: #4fd1c5; --t4: #a594ff; --on-t: #0f141a;
+  --ok: #5ad18b; --warn: #ffc857; --err: #ff6b6b; --rec: #ff5a5a; --learn: #6ea8fe; --on-accent: #0b1220;
+  --shadow: 0 14px 40px rgba(0, 0, 0, .55); --scrim: rgba(4, 8, 14, .6);
+  color-scheme: dark;
+}
+
+/* Meadow: soft green-white, deeper tracks */
+[data-theme="meadow"] {
+  --bg: #eef2ea; --card: #f8faf5; --card2: #f2f5ee; --field: #ffffff; --sel: #e0e8d8;
+  --ink: #18201a; --ink2: #3f4a41; --mute: #727e72; --faint: #a6b0a3; --rule: #d9e1d2; --rule2: #c2cdb9;
+  --t1: #c2410c; --t2: #a16207; --t3: #0f766e; --t4: #7c3aed; --on-t: #ffffff;
+  --ok: #2f8f4e; --warn: #a16207; --err: #c2410c; --rec: #d4361f; --learn: #2563eb; --on-accent: #ffffff;
+  --shadow: 0 14px 40px rgba(30, 50, 30, .16); --scrim: rgba(20, 35, 20, .32);
+  color-scheme: light;
+}

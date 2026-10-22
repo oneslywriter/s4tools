@@ -1,0 +1,89 @@
+# Uploads the site to the web host (FTPS) on every push to main, or by hand from the Actions tab.
+# Setup: deploy/README.md. Needs the repository secrets FTP_HOST, FTP_USER and FTP_PASSWORD; until they exist the
+# deploy is skipped. The upload mirrors into the site's folder and removes files the site no longer has, so it
+# first checks that folder isn't the hosting account's home or a website root, and stops if it is.
+name: Deploy to the website
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      FTP_HOST: ${{ secrets.FTP_HOST }}
+      FTP_USER: ${{ secrets.FTP_USER }}
+      LFTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+      # the site's folder as the FTP account sees it: "/" when the account's home is the site's folder,
+      # else its path, e.g. /www/s4tools (repository variable FTP_DIR)
+      FTP_DIR: ${{ vars.FTP_DIR || '/' }}
+      # TLS for the login and the files, with the server's certificate checked
+      LFTP_TLS: set ftp:ssl-force true; set ftp:ssl-protect-data true; set ssl:verify-certificate yes; set net:max-retries 2; set net:timeout 30
+    steps:
+      - name: Skip until the FTP secrets are set
+        if: env.FTP_HOST == '' || env.FTP_USER == '' || env.LFTP_PASSWORD == ''
+        run: echo "::notice::Deploy skipped. Add the FTP_HOST, FTP_USER and FTP_PASSWORD secrets (deploy/README.md)."
+
+      - uses: actions/checkout@v5
+        if: env.FTP_HOST != '' && env.FTP_USER != '' && env.LFTP_PASSWORD != ''
+
+      - name: Collect the site's files
+        if: env.FTP_HOST != '' && env.FTP_USER != '' && env.LFTP_PASSWORD != ''
+        run: |
+          mkdir -p site/docs
+          cp -r index.html css js LICENSE site/
+          cp docs/guide.html docs/GUIDE.md site/docs/
+          cp deploy/htaccess site/.htaccess
+          find site -type f | sort
+
+      - name: Install lftp
+        if: env.FTP_HOST != '' && env.FTP_USER != '' && env.LFTP_PASSWORD != ''
+        run: sudo apt-get update -q && sudo apt-get install -y -q lftp
+
+      - name: Check the target folder
+        if: env.FTP_HOST != '' && env.FTP_USER != '' && env.LFTP_PASSWORD != ''
+        # The upload removes whatever the site doesn't have, so it only runs when the folder holds nothing but the
+        # site's own files and the host's: never on the account's home folder, a website root or another site.
+        run: |
+          if ! lftp -c "$LFTP_TLS; open --env-password -u \"$FTP_USER\" \"$FTP_HOST\"; cd \"$FTP_DIR\"; cls -1aF" > target.txt 2> lftp.err; then
+            cat lftp.err
+            hint=""
+            if grep -q 'Certificate verification' lftp.err; then
+              # the names the server's certificate covers (public: any FTP client sees them): FTP_HOST must be one
+              names=$(openssl s_client -starttls ftp -connect "$FTP_HOST:21" < /dev/null 2> /dev/null \
+                | openssl x509 -noout -subject -ext subjectAltName 2> /dev/null | tr '\n' ' ' | tr -s ' ')
+              hint=" The server's certificate is for: ${names:-(could not read it)}. Set the FTP_HOST secret to that host name."
+            fi
+            echo "::error::Could not open $FTP_DIR on the server: $(grep -v '^[[:space:]]*$' lftp.err | tail -2 | tr '\n' ' ')${hint} (see When something fails in deploy/README.md)"
+            exit 1
+          fi
+          echo "In $FTP_DIR now:"; sed 's/^/  /' target.txt
+          names() { sed -e 's#[/@*]$##' -e 's#^.*/##' | grep -vxE '\.|\.\.|' | sort -u; }
+          ( ls -1A site; printf '%s\n' .well-known cgi-bin .ftpquota error_log ) | names > allowed.txt
+          other=$(names < target.txt | comm -23 - allowed.txt)
+          if [ -n "$other" ]; then
+            echo "::error::$FTP_DIR holds files that aren't part of s4tools, and the upload would delete them: $(echo $other | tr '\n' ' '). Point the FTP account (or FTP_DIR) at the site's own folder (deploy/README.md)."
+            exit 1
+          fi
+
+      - name: Upload over FTPS
+        if: env.FTP_HOST != '' && env.FTP_USER != '' && env.LFTP_PASSWORD != ''
+        # the host's own files in the folder (.well-known for the SSL certificate, cgi-bin, .ftpquota) are left alone
+        run: |
+          if ! lftp -c "$LFTP_TLS; open --env-password -u \"$FTP_USER\" \"$FTP_HOST\"; \
+            mirror --reverse --delete --verbose --parallel=4 \
+              --exclude-glob .well-known/ --exclude-glob cgi-bin/ --exclude-glob .ftpquota \
+              site/ \"$FTP_DIR\"" 2> lftp.err; then
+            cat lftp.err
+            echo "::error::The upload failed: $(grep -v '^[[:space:]]*$' lftp.err | tail -2 | tr '\n' ' ')"
+            exit 1
+          fi

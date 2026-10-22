@@ -1,0 +1,19 @@
+# s4tools on the web server (uploaded as .htaccess by the deploy).
+
+# https only: Web MIDI, folder access and the recorder all need a secure page
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTPS} !=on
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# the app has no build step or versioned file names: browsers check for a newer copy of these on each visit
+# (and get "not modified" when nothing changed), so a deploy shows up straight away
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|js|css|md)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
+
+AddType text/markdown .md
+AddCharset utf-8 .html .js .css .md
