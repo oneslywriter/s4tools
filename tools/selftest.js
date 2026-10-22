@@ -1140,7 +1140,7 @@
     // the count-in click here and on an S-4 track (none there)
     const R = S4.rec;
     if (typeof MediaStreamTrackGenerator === 'function') {
-      Object.assign(R.settings, { mode: 'count', target: 'pc', click: 'bypass', clickTrack: 1 });
+      Object.assign(R.settings, { mode: 'count', target: 'pc', click: 's4' });
       S4.state.playing = false;
       await R.toggleCount();
       ok(/isn.t there/.test($('#toast').textContent), 'bypass click without the S-4 output: silent count-in', $('#toast').textContent);

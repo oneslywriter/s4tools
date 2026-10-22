@@ -5,18 +5,23 @@
 //   Threshold: armed, the first sound above the threshold starts a take, either on the PC (with pre-roll, so
 //     nothing is cut) or with the S-4's own REC on a track or the main out. An S-4 take misses the first ~45 ms
 //     of the sound: its way to the PC, Chrome's 10 ms blocks, the REC note and the S-4's start (VERIFY.md).
-//   Count-in: 1 or 2 bars at the project's BPM (the Build project), heard on this computer, on an S-4 track
-//     in BYPASS (its USB input pair) or only seen. On the downbeat the S-4 gets START (and the REC), sent
+//   Count-in: 1 or 2 bars at the project's BPM (the Build project), heard on this computer, on the S-4 (its
+//     main-out USB pair: no setup there) or only seen. On the downbeat the S-4 gets START (and the REC), sent
 //     timestamped, and the take begins; it ends by hand or after a set number of bars, exactly on the bar.
+//     Measured with a click at the start of bar 1 (2026-10-22): with the click on the S-4, its bar 1 lands
+//     about 7 ms after the click's beat (-8 to +30 ms over 6 runs).
 (function (S4) {
   const h = S4.h;
   const R = S4.rec = {
     on: false, armed: false, device: '',
     settings: Object.assign({
       inId: null, thresh: -30, target: 'pc', hold: 2,
-      mode: 'thresh', bars: 1, click: 'local', clickTrack: 0, localOut: '', takeBars: 0,
+      mode: 'thresh', bars: 1, click: 'local', localOut: '', takeBars: 0,
     }, S4.store.get('rec', {})),
   };
+  // the click on the S-4 used to need a track in BYPASS; it now goes to the main out
+  if (R.settings.click === 'bypass') R.settings.click = 's4';
+  delete R.settings.clickTrack;
   const save = () => S4.store.set('rec', R.settings);
   const PRE = 0.5; // seconds of pre-roll for a PC take started by the threshold
   const TARGETS = [
@@ -187,14 +192,15 @@
   }
 
   // ---------- count-in ----------
-  // The click: on this computer (an output picked here), into an S-4 track's USB input pair (the track's MATERIAL
-  // in BYPASS, as the hardware preview uses it), or none. The stream to the S-4 starts and ends with silence, so
-  // the S-4 doesn't keep replaying a block of click (it loops the last 1024 samples it got).
+  // The click: on this computer (an output picked here), on the S-4 (the USB pair of its main out, as Play on S-4
+  // numbers them), or none. Each count-in opens its own audio connection (one kept open between count-ins landed
+  // the S-4's bar 1 about 20 ms later on average, measured 2026-10-22). The stream to the S-4 starts and ends with
+  // silence, so the S-4 doesn't keep replaying a piece of click (it loops the last 1024 samples it got).
   async function clickOut() {
     const mode = R.settings.click;
     if (mode === 'visual') return null;
     let sinkId = R.settings.localOut || '';
-    if (mode === 'bypass') {
+    if (mode === 's4') {
       const out = (await devices('audiooutput')).find(isS4);
       if (!out) { S4.toast('The S-4\'s audio output isn\'t there, so the count-in is silent', 'err'); return null; }
       sinkId = out.deviceId;
@@ -203,15 +209,15 @@
     await Promise.race([ctx.resume(), new Promise(r => setTimeout(r, 1000))]);
     if (ctx.state !== 'running') { ctx.close(); S4.toast('This computer\'s audio didn\'t start, so the count-in is silent', 'err'); return null; }
     const dest = ctx.createGain(); // muted to cancel the clicks still to come
-    if (mode === 'bypass') {
+    if (mode === 's4') {
       const n = ctx.destination.maxChannelCount;
       ctx.destination.channelCount = n;
       ctx.destination.channelInterpretation = 'discrete';
       const merger = ctx.createChannelMerger(n);
       merger.connect(ctx.destination);
-      const base = S4.hw.ORDERS[S4.hw.order()].pairs[R.settings.clickTrack];
-      dest.connect(merger, 0, base);
-      dest.connect(merger, 0, base + 1);
+      const main = S4.hw.ORDERS[S4.hw.order()].master;
+      dest.connect(merger, 0, main);
+      dest.connect(merger, 0, main + 1);
       const sil = ctx.createConstantSource();
       sil.offset.value = 0;
       sil.connect(merger, 0, 0);
@@ -265,8 +271,9 @@
       const bars = R.settings.takeBars;
       if (bars > 0) {
         const end = down + bars * 4 * cn.beat;
-        // a PC take runs on past the bar by the input delay; an S-4 take gets its REC timestamped for the bar
-        take.timer = setTimeout(() => R.stopTake(target === 'pc' ? undefined : end), end - performance.now() - (target === 'pc' ? -40 : 30));
+        // a PC take runs 120 ms past the bar, as the S-4's sound reaches the PC 20-60 ms after it plays (measured);
+        // an S-4 take gets its REC timestamped for the bar
+        take.timer = setTimeout(() => R.stopTake(target === 'pc' ? undefined : end), end - performance.now() - (target === 'pc' ? -120 : 30));
       }
       setTimeout(() => { if (cn.click) cn.click.ctx.close(); }, 600);
       S4.emit('rec');
@@ -314,7 +321,7 @@
 
   const clickText = () => {
     const s = R.settings;
-    return s.click === 'visual' ? 'silent' : s.click === 'bypass' ? `click on T${s.clickTrack + 1}` : 'click here';
+    return s.click === 'visual' ? 'silent' : s.click === 's4' ? 'click on the S-4' : 'click here';
   };
   const setStatus = () => { els.status.textContent = els.status.title = statusText(); };
   function statusText() {
@@ -363,9 +370,8 @@
         { head: 'Click here, on this computer' },
         { label: 'The default output', checked: s.click === 'local' && !s.localOut, action: () => { s.localOut = ''; set('click', 'local'); } },
         ...outs.filter(d => !isS4(d)).map(d => ({ label: d.label || 'Output without a name', checked: s.click === 'local' && s.localOut === d.deviceId, action: () => { s.localOut = d.deviceId; set('click', 'local'); } })),
-        { head: 'Click on the S-4, through a track in BYPASS' },
-        ...[0, 1, 2, 3].map(t => ({ label: `T${t + 1}`, hint: 'its MATERIAL in BYPASS', checked: s.click === 'bypass' && s.clickTrack === t, action: () => { s.clickTrack = t; set('click', 'bypass'); } })),
         { sep: true },
+        { label: 'Click on the S-4', hint: 'out of its main out', checked: s.click === 's4', action: () => set('click', 's4') },
         { label: 'No click: the countdown only', checked: s.click === 'visual', action: () => set('click', 'visual') },
       ]);
     } });

@@ -145,11 +145,11 @@ A take on the S-4 needs a few things:
 The take starts after one or two bars of count-in, in time with the S-4.
 
 1. Choose **Count-in**.
-2. In its menu, pick **1 or 2 bars** and where the click plays: **here** (any output on this computer; choose speakers or headphones, not the S-4), **on the S-4** through a track whose MATERIAL is in BYPASS, or **no click** (the button counts down).
+2. In its menu, pick **1 or 2 bars** and where the click plays: **here** (any output on this computer; choose speakers or headphones, not the S-4), **on the S-4** (out of its main out; nothing to set up there), or **no click** (the button counts down).
 3. Choose where the take goes, and its **Length** in bars (0: until you stop it).
 4. Stop the S-4 and press **Count in**.
 
-The tempo is the Build project's. On the first beat the S-4 starts (and records, for an S-4 take). Both commands are sent ahead of time so they land on the beat, and a take with a length ends exactly on the bar.
+The tempo is the Build project's. On the first beat the S-4 starts (and records, for an S-4 take). Both commands are sent ahead of time so they land on the beat, and a take with a length ends on the bar (a take on the PC runs a moment longer, so the bar's end is all there). With the click on the S-4, its bar 1 lands within a few milliseconds of the click's beat.
 
 ---
 
@@ -306,7 +306,7 @@ The sliders button at the top right.
 
 **The meter stays flat.** Allow the microphone for the page, and check the input (the arrow by the meter). A track that only listens to its input needs its monitor on to reach the main out.
 
-**No count-in click.** The default output may be the S-4 itself. Choose your speakers or headphones in the count-in menu, or a BYPASS track on the S-4.
+**No count-in click.** The default output may be the S-4 itself. Choose your speakers or headphones in the count-in menu, or the click on the S-4.
 
 **Play on S-4 is silent.** The tracks' MATERIAL must be in BYPASS and the output must be the S-4. Use the beeps to check each track.
 
