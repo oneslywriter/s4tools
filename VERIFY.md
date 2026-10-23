@@ -212,7 +212,7 @@ Imported, the S-4's own SAMPLE END / TRACK 2 save shows as such and exports unch
 | Mixer LEVEL (46–49, ch 16) | −100 to +6 dB, the same exponential shape with k = 3: 0 → −100, 64 → −13.04, 100 → +1.04, 127 → +6 |
 | Mixer PAN (54–57) / FILTER (50–53) | −1 + 2x |
 | COMPRESS (58) | x (64 → 0.504) |
-| MACRO 1–8 (46–53, ch 15) | −1 + 2x |
+| MACRO 1–8 (46–53, ch 15) | −1 + 2x (macros without routings) |
 | MAIN (61) | not stored in the project |
 
 The save also showed two things the app doesn't depend on. The S-4 added `default_sample_tempo` to the unused DISC entry of TAPE and POLY tracks. After TEMPO or SPEED was set on a STRETCH DISC, it changed that DISC's START / LENGTH grid (to 1/1 and 1/16).

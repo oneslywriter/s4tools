@@ -19,11 +19,11 @@
         devices: { material: 'DISC', granular: 'MOSAIC', filter: 'RING', color: 'DEFORM', space: 'VAST' },
         // the S-4's default modulator per slot (manual)
         vals: {}, mods: {}, modTypes: ['RANDOM', 'RANDOM', 'WAVE', 'WAVE'], bypass: {},
-        lvl: 100, pan: 64, fltr: 64,
+        lvl: 96, pan: 64, fltr: 64, // LVL 96 = 0 dB
         mute: false, solo: false, s4muted: false, tplay: true, trec: false, mon: false,
       })),
       master: { main: 100, comp: 0 },
-      macros: [0, 0, 0, 0, 0, 0, 0, 0],
+      macros: [64, 64, 64, 64, 64, 64, 64, 64], // 64 = 0, a fresh project's macros
       scene: 1,
       playing: false,
       rec: false,
@@ -55,13 +55,14 @@
       }
       case 'mod': {
         const t = +a[1], cc = +a[2], m = Math.floor((cc - 14) / 8), i = (cc - 14) % 8;
-        const name = S4.MOD_TYPES[st.tracks[t].modTypes[m]][i];
-        const bi = S4.MOD_BI.has(name);
-        return { kind: 'cont', ch: t + 1, cc, bi, def: bi ? 64 : 0, short: name, label: `T${t + 1} · MOD ${m + 1} ${name}` };
+        const type = st.tracks[t].modTypes[m], name = S4.MOD_TYPES[type][i];
+        const bi = S4.MOD_BI.has(name), sp = S4.params.MOD[type] && S4.params.MOD[type].params.find(x => x.cc === i);
+        // the S-4's default for this modulator type (s4params.js), as the nearest CC
+        return { kind: 'cont', ch: t + 1, cc, bi, def: sp ? S4.params.cc(sp, sp.def) : bi ? 64 : 0, short: name, label: `T${t + 1} · MOD ${m + 1} ${name}` };
       }
       case 'mix': {
         const k = a[1], t = +a[2];
-        return { kind: 'cont', ch: S4.CH_MIX, cc: S4.MIX_CC[k] + t, bi: k !== 'lvl', def: k === 'lvl' ? 100 : 64, short: nameOf[k], label: `T${t + 1} · MIX ${nameOf[k]}` };
+        return { kind: 'cont', ch: S4.CH_MIX, cc: S4.MIX_CC[k] + t, bi: k !== 'lvl', def: k === 'lvl' ? 96 : 64, short: nameOf[k], label: `T${t + 1} · MIX ${nameOf[k]}` };
       }
       case 'master': {
         const main = a[1] === 'main';
@@ -69,7 +70,7 @@
       }
       case 'macro': {
         const n = +a[1];
-        return { kind: 'cont', ch: S4.CH_PERFORM, cc: S4.MACRO_CC + n - 1, bi: false, def: 0, short: 'M' + n, label: 'MACRO ' + n };
+        return { kind: 'cont', ch: S4.CH_PERFORM, cc: S4.MACRO_CC + n - 1, bi: false, def: 64, short: 'M' + n, label: 'MACRO ' + n };
       }
       case 'btn': {
         const k = a[1];

@@ -8,19 +8,20 @@
 (function (S4) {
   const P = S4.params = {};
   const E = k => Math.exp(k) - 1;
-  // curves: to(cc) -> value, from(value) -> cc (continuous, not rounded). x = cc / 127.
-  const lin = (a, b) => ({ to: c => a + ((b - a) * c) / 127, from: v => ((v - a) / (b - a)) * 127 });
-  const expo = (a, b, k) => ({ // a + (b - a)(e^kx - 1)/(e^k - 1): fine resolution at the low end
+  // curves: to(cc) -> value, from(value) -> cc (continuous, not rounded). x = cc / 127. kind and the numbers
+  // describe the curve (tools/make_ccref.js writes them out).
+  const lin = (a, b) => ({ kind: 'lin', a, b, to: c => a + ((b - a) * c) / 127, from: v => ((v - a) / (b - a)) * 127 });
+  const expo = (a, b, k) => ({ kind: 'expo', a, b, k, // a + (b - a)(e^kx - 1)/(e^k - 1): fine resolution at the low end
     to: c => a + ((b - a) * (Math.exp((k * c) / 127) - 1)) / E(k),
     from: v => (Math.log(1 + (Math.max(v, a) - a) / (b - a) * E(k)) / k) * 127,
   });
-  const rexp = (a, b, k) => ({ // mirrored: fine resolution at the top (levels in dB)
+  const rexp = (a, b, k) => ({ kind: 'rexp', a, b, k, // mirrored: fine resolution at the top (levels in dB)
     to: c => b - ((b - a) * (Math.exp(k * (1 - c / 127)) - 1)) / E(k),
     from: v => (1 - Math.log(1 + (b - Math.min(v, b)) / (b - a) * E(k)) / k) * 127,
   });
-  const geo = (a, b) => ({ to: c => a * Math.pow(b / a, c / 127), from: v => (Math.log(Math.max(v, a) / a) / Math.log(b / a)) * 127 });
+  const geo = (a, b) => ({ kind: 'geo', a, b, to: c => a * Math.pow(b / a, c / 127), from: v => (Math.log(Math.max(v, a) / a) / Math.log(b / a)) * 127 });
   const steps = table => ({
-    table,
+    kind: 'steps', table,
     to: c => table[Math.round((S4.clamp(c, 0, 127) * (table.length - 1)) / 127)],
     from: v => { let k = 0; table.forEach((x, i) => { if (Math.abs(x - v) < Math.abs(table[k] - v)) k = i; }); return (k * 127) / (table.length - 1); },
   });
@@ -186,8 +187,15 @@
       pct('velocity', 58, { def: 0.5, label: 'VELOCITY' }), bi('filter_amount', 60, { label: 'FLTR AMOUNT' }), bi('filter_shape', 61, { label: 'FLTR SHAPE' }),
     ],
   };
-  // Levels in dB (DISC 56, POLY 50) on the S-4's level curve.
+  // Levels in dB (DISC 56, TAPE 50, POLY 50) on the S-4's level curve.
   P.LEVEL = rexp(-100, 12, 4);
+  // Calibration round 4 (S4T CAL4, 2026-10-22). DISC / TAPE SPEED in semitones in FREE (OCTAVES and the scales
+  // step through their notes: P.scaleCurve); DISC TEMPO in BPM (whole BPM in SYNC); POLY PITCH in semitones in
+  // both modes; the mixer's LEVEL in dB. START / LENGTH step through the sample's grid steps (follow.js).
+  P.SPEED = lin(-36, 36);
+  P.TEMPO = lin(20, 999);
+  P.POLY_PITCH = lin(-12, 12);
+  P.MIX_LEVEL = rexp(-100, 6, 3);
 
   // value -> nearest CC, and the value that CC really gives (what the S-4 plays during the hardware preview)
   P.cc = (spec, v) => Math.round(S4.clamp(spec.curve.from(v), 0, 127));
@@ -264,4 +272,16 @@
     fmt: v => P.fmt(spec, v),
     spec,
   });
+
+  // Live's knobs (js/ccmap.js) start and reset at the S-4's own defaults above, as the nearest CC. The material's
+  // TEMPO (a sample's own tempo) resets to 120 BPM and its LEVEL to 0 dB.
+  const MORE = { DISC: { 47: [P.TEMPO, 120], 56: [P.LEVEL, 0] }, TAPE: { 50: [P.LEVEL, 0] }, POLY: { 50: [P.LEVEL, 0] } };
+  for (const [name, d] of Object.entries(S4.DEVICES)) {
+    const specs = (P.DEV[name] ? P.DEV[name].params : P.MAT[name]) || [];
+    d.params.forEach(p => {
+      const sp = specs.find(s => s.cc === p.cc), more = MORE[name] && MORE[name][p.cc];
+      if (sp) p.def = P.cc(sp, sp.def);
+      else if (more) p.def = P.cc({ curve: more[0] }, more[1]);
+    });
+  }
 })(window.S4);

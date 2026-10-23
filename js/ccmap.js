@@ -5,7 +5,8 @@
 //   MIX (+ MIX mods)  -> channel 16
 //   PERFORM (+ mods)  -> channel 15
 (function (S4) {
-  // bi: bipolar (centre = 64). def: value RESET sends. fmt: display units.
+  // bi: bipolar (centre = 64). def: value RESET sends (s4params.js replaces it with the S-4's own default).
+  // fmt: display units.
   // level: excluded from RANDOMIZE. safeMax: RANDOMIZE ceiling (avoid runaway feedback).
   const P = (name, cc, o = {}) => Object.assign({ name, cc, bi: false }, o);
   const D = (slot, params, wet) => {
@@ -20,17 +21,17 @@
       P('SOS', 57), P('DENSITY', 58),
     ], [56]),
     TAPE: D('material', [
-      P('SPEED', 46, { bi: true, fmt: 'st' }), P('ROTATE', 48, { bi: true }), P('LENGTH', 49, { def: 127 }),
+      P('SPEED', 46, { bi: true, fmt: 'oct' }), P('ROTATE', 48, { bi: true }), P('LENGTH', 49, { def: 127 }),
       P('LEVEL', 50, { def: 100, level: true }), P('SOS', 51, { bi: true }), P('XFADE', 53),
     ], [50]),
     POLY: D('material', [
-      P('PITCH', 46, { bi: true, fmt: 'st' }), P('START', 48), P('LENGTH', 49, { def: 127 }), P('LEVEL', 50, { def: 100, level: true }),
+      P('PITCH', 46, { bi: true, fmt: 'st12' }), P('START', 48), P('LENGTH', 49, { def: 127 }), P('LEVEL', 50, { def: 100, level: true }),
       P('LOOP', 52), P('XFADE', 53), P('ATTACK', 54), P('DECAY', 55, { def: 64 }),
       P('SUSTAIN', 56, { def: 127 }), P('CURVE', 57, { bi: true }), P('VELOCITY', 58, { def: 64 }),
       P('FLTR AMOUNT', 60, { bi: true }), P('FLTR SHAPE', 61, { bi: true }),
     ], [50]),
     MOSAIC: D('granular', [
-      P('PITCH', 62, { bi: true, fmt: 'st' }), P('RATE', 63, { def: 64 }), P('SIZE', 64, { def: 64 }), P('CONTOUR', 65, { bi: true }),
+      P('PITCH', 62, { bi: true, fmt: 'fifths' }), P('RATE', 63, { def: 64 }), P('SIZE', 64, { def: 64 }), P('CONTOUR', 65, { bi: true }),
       P('SCAN', 66, { def: 64 }), P('SPRAY', 67), P('PATTERN', 68), P('WET', 69, { def: 64 }),
       P('RAND PITCH', 70), P('RAND RATE', 71), P('RAND SIZE', 72), P('RAND AMP', 73),
       P('RAND REV', 74), P('FEEDBACK', 77, { safeMax: 100 }),
@@ -83,11 +84,14 @@
 
   S4.param = (dev, cc) => (S4.DEVICES[dev] ? S4.DEVICES[dev].params.find(p => p.cc === cc) : null);
 
-  // Display formatting. The S-4 maps 0-127 onto each parameter's own range;
-  // only units the docs state are converted, everything else shows the CC value.
+  // Display formatting. Pitches and speeds show semitones on the S-4's measured curves (s4params.js), in the
+  // device's default mode (Live doesn't know the mode a project set); everything else shows the CC value.
   S4.fmtCC = function (v, bi, fmt) {
-    if (fmt === 'oct') { const st = Math.round(((v - 64) / 64) * 3) * 12; return S4.signed(st) + ' ST'; }
-    if (fmt === 'st') return S4.signed(Math.round(((v - 64) / 64) * 24)) + ' ST';
+    const P = S4.params;
+    if (fmt === 'oct') return S4.signed(P.scaleCurve('octaves').to(v)) + ' ST'; // DISC in SYNC, TAPE: OCTAVES
+    if (fmt === 'fifths') return S4.signed(P.scaleCurve('fifths').to(v)) + ' ST'; // MOSAIC: FIFTHS
+    if (fmt === 'st12') return S4.signed(Math.round(P.POLY_PITCH.to(v))) + ' ST'; // POLY: -12 to +12
+    if (fmt === 'st') return S4.signed(Math.round(((v / 127) * 2 - 1) * 24)) + ' ST'; // RING: -24 to +24
     if (bi) return S4.signed(v - 64);
     return String(v);
   };

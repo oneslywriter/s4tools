@@ -75,7 +75,7 @@ Live shows the S-4's four tracks as four coloured lanes.
 
 - Drag up or down. Hold **Shift** for small steps.
 - Scroll the mouse wheel, or use the arrow keys; **Home** and **End** jump to the ends.
-- Double-click a knob to reset it.
+- Double-click a knob to reset it to the S-4's own default (what a fresh device has).
 - Where the value is underlined when you point at it, click it and type.
 
 ---

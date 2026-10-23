@@ -22,7 +22,7 @@ and open http://localhost:8765/. Any https host works too.
 
 ## The S-4 project format
 
-[schema/S4-PROJECT.md](schema/S4-PROJECT.md) describes every field of an S-4 `project.json` (meaning, values, units, defaults, MIDI CC), and [schema/s4project.schema.json](schema/s4project.schema.json) has the same as a JSON Schema. Both come from `tools/make_schema.py`. To check a project:
+[schema/S4-PROJECT.md](schema/S4-PROJECT.md) describes every field of an S-4 `project.json` (meaning, values, units, defaults, MIDI CC), and [schema/s4project.schema.json](schema/s4project.schema.json) has the same as a JSON Schema. Both come from `tools/make_schema.py`. [schema/S4-CC.md](schema/S4-CC.md) lists what every MIDI CC sets on the S-4 across 0-127, measured on the hardware, and [schema/s4cc.json](schema/s4cc.json) has all 128 values of each (from `tools/make_ccref.js`). To check a project:
 
 ```bash
 python tools/check_schema.py "PROJECTS/MY SONG.s4project/project.json"

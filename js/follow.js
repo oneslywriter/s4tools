@@ -18,9 +18,8 @@
   // CC curves from calibration round 4 (S4T CAL4, 2026-10-22). A SPEED in OCTAVES or a scale is the nearest
   // step to the linear value, a TEMPO in SYNC the nearest whole BPM; START / LENGTH on a grid step evenly
   // through the grid steps (LENGTH from one step to all of them), and in FREE through the sample's seconds.
-  const { lin, rexp } = P.curves;
-  const SPEED = lin(-36, 36), TEMPO = lin(20, 999), PITCH = lin(-12, 12), BI = lin(-1, 1);
-  const MIX_LEVEL = rexp(-100, 6, 3);
+  const { lin } = P.curves;
+  const SPEED = P.SPEED, TEMPO = P.TEMPO, PITCH = P.POLY_PITCH, MIX_LEVEL = P.MIX_LEVEL, BI = lin(-1, 1);
   const step = (k, n) => (n > 1 ? (k * 127) / (n - 1) : 0); // grid step k (from 0) of n
 
   F.project = () => (S4.cr && S4.cr.proj) || null;

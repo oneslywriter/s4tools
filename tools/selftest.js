@@ -212,6 +212,9 @@
     ok(take().includes(hex([0xB1, wet[0], 90])), 'switch on sends the old wet');
     $$('.lv-insp .insp-tools .ib')[1].click();
     ok(ids.every(id => S4.ctl.get(id) === S4.ctl.info(id).def), 'reset puts every knob at its default');
+    // the defaults are the S-4's own (s4params.js): RING WET 100%, DISC TEMPO 120 BPM, LEVEL 0 dB
+    ok(S4.ctl.get(`p.1.filter.${wet[0]}`) === 127 && S4.param('DISC', 47).def === 13 && S4.param('DISC', 56).def === 66 && S4.param('TAPE', 50).def === 66,
+      'the defaults are the S-4\'s', [S4.ctl.get(`p.1.filter.${wet[0]}`), S4.param('DISC', 47).def, S4.param('DISC', 56).def]);
     take();
     $$('.lv-insp .insp-tools .ib')[2].click();
     const vals = ids.map(id => [id, S4.ctl.get(id), S4.ctl.info(id)]);
