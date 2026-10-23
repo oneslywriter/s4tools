@@ -196,6 +196,13 @@
   const discSpeed = (tr, dflt) => (tr.dspMode && tr.dspMode !== 'octaves'
     ? V(tr.dspMode === 'free' ? r6(tr.speedSt || 0) : Math.round(tr.speedSt || 0), tr.dspMode)
     : V(Math.round(tr.speed || 0) * 12, dflt));
+  // TAPE SPEED's default mode is OCTAVES; other whole semitones are CHROMATIC, the rest FREE, unless a mode
+  // was chosen (and the value fits it: no tempo correction on top)
+  const tapeSpMode = (tr, semis, syncSemis, warp) => {
+    const auto = !Number.isInteger(semis) ? 'free' : semis % 12 ? 'chromatic' : '';
+    const tm = tr.tspMode;
+    return tm !== undefined && !syncSemis && !warp && (tm === 'free' || (Number.isInteger(semis) && !(tm === '' && semis % 12))) ? tm : auto;
+  };
   // DISC STRETCH by the S-4: PITCH in semitones in its scale; the shift into the project key is chromatic
   const stretchSpeed = tr => {
     const shift = S4.analysis.trackShift(tr, ctxKey);
@@ -216,15 +223,16 @@
   // START / LENGTH on a grid comes with the grid in beats and the number of steps its knob moves through: the
   // sample's length in grid steps (DISC), or for a TAPE the 30 s it holds at the project tempo, in grid steps
   // and not a whole number (11.25 bars at 90 BPM: the knob rounds to whole bars, measured at 90 and 120 BPM).
-  // secs: the sample's length as the S-4 gets it, null until Build has read the file. An imported
+  // secs: the sample's length as the S-4 gets it, null until Build has read the file. speedMode / tempoMode /
+  // lengthMode: the modes the export writes (SPEED or POLY PITCH, DISC TEMPO, LENGTH). An imported
   // track nobody changed gives the values the S-4 saved, which the export writes back as they are.
   const tapeSteps = (proj, g) => (TAPE_MAX_SECONDS * proj.bpm) / 60 / g;
   function storedRaw(proj, tr, key, b) {
     const val = k => (b[k] && typeof b[k].value === 'number' ? b[k].value : null), mode = k => (b[k] && b[k].mode) || '';
-    if (key === 'poly') return { pitch: val('pitch'), start: val('start'), length: val('length') };
+    if (key === 'poly') return { pitch: val('pitch'), start: val('start'), length: val('length'), speedMode: mode('pitch') };
     const secs = tr.sample.dur, g = GRID_BEATS[mode('length')];
-    if (key === 'tape') return { speed: val('speed'), length: g ? val('length') : null, grid: g, steps: g ? tapeSteps(proj, g) : 0, secs };
-    const out = { speed: val('speed'), tempo: val('tempo'), secs };
+    if (key === 'tape') return { speed: val('speed'), length: g ? val('length') : null, grid: g, steps: g ? tapeSteps(proj, g) : 0, secs, speedMode: mode('speed'), lengthMode: mode('length') };
+    const out = { speed: val('speed'), tempo: val('tempo'), secs, speedMode: mode('speed'), tempoMode: mode('tempo') };
     if (secs == null) return out;
     Object.assign(out, { start: val('start'), length: val('length') });
     return mode('tempo') === 'free' || !g || out.tempo == null ? out : Object.assign(out, { grid: g, steps: Math.round((secs * out.tempo) / 60 / g) });
@@ -240,7 +248,7 @@
     const raw = tr.s4raw && tr.s4raw.material && tr.s4raw.material[key];
     if (raw && tr.s4in === mapped(tr)) return storedRaw(proj, tr, key, raw);
     if (tr.device === 'POLY') {
-      return { pitch: tr.pitchMode === 'free' ? tr.pitch || 0 : Math.round(tr.pitch || 0), start: (tr.pStart || 0) / 100, length: (tr.pLen != null ? tr.pLen : 100) / 100 };
+      return { pitch: tr.pitchMode === 'free' ? tr.pitch || 0 : Math.round(tr.pitch || 0), start: (tr.pStart || 0) / 100, length: (tr.pLen != null ? tr.pLen : 100) / 100, speedMode: tr.pitchMode === 'free' ? 'free' : '' };
     }
     const sb = s.bpm || proj.bpm, warp = appWarped(tr), PT = projTempo(proj);
     let secs = s.dur != null ? (tr.trimOut - tr.trimIn) * s.dur : null;
@@ -248,12 +256,14 @@
     if (tr.device === 'TAPE') {
       const syncSemis = tr.tempo === 'sync' && s.bpm ? 12 * Math.log2(proj.bpm / s.bpm) : 0;
       const t = tr.length ? (tr.length * 60) / (warp ? PT : sb) : secs != null && warp ? (secs * sb) / PT : secs;
-      return { speed: warp ? 0 : syncSemis + (tr.speed || 0), length: t != null ? (Math.min(TAPE_MAX_SECONDS, t) * proj.bpm) / 60 : null,
-        grid: 4, steps: tapeSteps(proj, 4), secs };
+      const semis = warp ? 0 : r6(syncSemis + (tr.speed || 0));
+      return { speed: semis, length: t != null ? (Math.min(TAPE_MAX_SECONDS, t) * proj.bpm) / 60 : null,
+        grid: 4, steps: tapeSteps(proj, 4), secs, speedMode: tapeSpMode(tr, semis, syncSemis, warp), lengthMode: '1/1' };
     }
     const stretch = !warp && tr.tempo === 'stretch' && s.bpm;
     const sync = (tr.tempo === 'sync' || tr.tempo === 'stretch') && s.bpm;
-    const out = { speed: (stretch ? stretchSpeed(tr) : sync ? (warp ? V(0) : discSpeed(tr, 'octaves')) : discSpeed(tr, 'free')).value, tempo: warp ? PT : sb, secs };
+    const sp = stretch ? stretchSpeed(tr) : sync ? (warp ? V(0, 'octaves') : discSpeed(tr, 'octaves')) : discSpeed(tr, 'free');
+    const out = { speed: sp.value, tempo: warp ? PT : sb, secs, speedMode: sp.mode, tempoMode: stretch ? 'stretch' : sync ? 'sync' : 'free' };
     if (secs == null) return out;
     if (!sync) return Object.assign(out, { start: 0, length: secs });
     const g = GRID_BEATS[tr.grid] || 1, total = (secs * sb) / 60, start = tr.start || 0;
@@ -334,11 +344,7 @@
       const prev = m.tape || {};
       m.selected = 1;
       if (!m.disc) m.disc = disc(s, t);
-      // TAPE SPEED's default mode is OCTAVES; other whole semitones are CHROMATIC, the rest FREE, unless a mode
-      // was chosen (and the value fits it: no tempo correction on top)
-      const auto = !Number.isInteger(semis) ? 'free' : semis % 12 ? 'chromatic' : '';
-      const tm = tr.tspMode;
-      const spMode = tm !== undefined && !syncSemis && !warp && (tm === 'free' || (Number.isInteger(semis) && !(tm === '' && semis % 12))) ? tm : auto;
+      const spMode = tapeSpMode(tr, semis, syncSemis, warp);
       m.tape = {
         speed: keepSpeed(tr, prev, V(semis, spMode)), rotate: mx('TAPE', prev, 'rotate'),
         length: V(r6((secs * proj.bpm) / 60), '1/1'), level: V(r6(S4.clamp(tr.lvl, -100, 12))),

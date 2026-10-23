@@ -40,10 +40,6 @@ Units, modes, defaults and the export format were measured on an S-4: test proje
 await (0, eval)(await (await fetch('/tools/selftest.js')).text())
 ```
 
-## Support
-
-s4tools is free. If it helps you, there's a [Ko-fi](https://ko-fi.com/slywriter).
-
 ## License
 
 MIT, see [LICENSE](LICENSE). s4tools is independent and not affiliated with Torso Electronics.

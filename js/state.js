@@ -115,9 +115,100 @@
     return 0;
   };
 
+  // ---------- the S-4's own units ----------
+  // A control's parameter as the S-4 stores it (s4params.js, measured), in the mode Live knows: the one the
+  // followed Build project set (tr.modes, tr.mat from follow.js), else the S-4's default. Its curve turns a CC
+  // into the value. null: no measured curve (MAIN, a TAPE LENGTH in seconds).
+  const round = c => ({ to: x => Math.round(c.to(x)), from: c.from });
+  function matSpec(tr, dev, cc) {
+    const P = S4.params, { lin } = P.curves, x = tr.mat && tr.mat.dev === dev ? tr.mat : {};
+    const sp = (P.MAT[dev] || []).find(s => s.cc === cc);
+    if (sp) return sp;
+    if (cc === 53) return { curve: lin(0, 1), unit: '%', def: 0 }; // XFADE
+    if (cc === (dev === 'DISC' ? 56 : 50)) return { curve: P.LEVEL, unit: 'dB', def: 0 };
+    if (dev === 'POLY') {
+      if (cc === 46) return { curve: x.speedMode === 'free' ? P.POLY_PITCH : round(P.POLY_PITCH), unit: 'st', def: 0 };
+      return cc === 48 || cc === 49 ? { curve: lin(0, 1), unit: '%', def: cc === 49 ? 1 : 0 } : null;
+    }
+    if (cc === 46) { // SPEED (with DISC STRETCH: PITCH), in OCTAVES, a scale or FREE
+      const m = x.speedMode || (dev === 'DISC' && x.tempoMode === 'stretch' ? 'chromatic' : dev === 'DISC' && x.tempoMode === 'free' ? 'free' : 'octaves');
+      return m === 'free' ? { curve: P.SPEED, unit: 'st', def: 0 } : { curve: P.scaleCurve(m) || P.scaleCurve('octaves'), unit: 'st', int: true, def: 0 };
+    }
+    if (dev === 'DISC' && cc === 47) return { curve: !x.tempoMode || x.tempoMode === 'sync' ? round(P.TEMPO) : P.TEMPO, unit: 'BPM', def: 120 };
+    if (dev === 'DISC' && (cc === 48 || cc === 49)) { // START / LENGTH: grid steps in the sample, or its seconds
+      const first = cc === 49 ? 1 : 0;
+      if (x.grid && x.steps >= 1) return { curve: P.curves.steps(Array.from({ length: x.steps }, (_, i) => (i + first) * x.grid)), unit: 'beats', def: first ? x.steps * x.grid : 0 };
+      if (x.secs) return { curve: lin(0, x.secs), unit: 's', def: first ? x.secs : 0 };
+      return { curve: lin(0, 1), unit: '%', def: first }; // the sample's length isn't known here: a share of it
+    }
+    if (dev === 'TAPE' && cc === 49) { // LENGTH: whole grid steps from one to the 30 s a TAPE holds
+      if (x.lengthMode === 'free') return null;
+      const g = x.grid || 4, proj = S4.cr && S4.cr.proj, B = x.steps || (30 * ((proj && proj.bpm) || 120)) / 60 / g;
+      return { curve: { to: c => g * Math.round(1 + (S4.clamp(c, 0, 127) / 127) * (B - 1)), from: v => ((v / g - 1) * 127) / (B - 1) }, unit: g === 4 ? 'bars' : 'beats' };
+    }
+    return null;
+  }
+  ctl.spec = function (id) {
+    const P = S4.params, { lin } = P.curves, a = id.split('.');
+    switch (a[0]) {
+      case 'p': {
+        const tr = st.tracks[+a[1]], dev = tr.devices[a[2]], cc = +a[3];
+        if (a[2] === 'material') return dev === 'BYPASS' ? null : matSpec(tr, dev, cc);
+        const sp = P.DEV[dev] && P.DEV[dev].params.find(s => s.cc === cc);
+        return sp ? P.inMode(sp, (tr.modes || {})[dev + '.' + cc] || '') : null;
+      }
+      case 'mod': {
+        const tr = st.tracks[+a[1]], cc = +a[2], m = Math.floor((cc - 14) / 8), type = tr.modTypes[m];
+        const sp = P.MOD[type] && P.MOD[type].params.find(s => s.cc === (cc - 14) % 8);
+        return sp ? P.inMode(sp, (tr.modes || {})[`mod.${type}.${cc}`] || '') : null;
+      }
+      case 'mix': return a[1] === 'lvl' ? { curve: P.MIX_LEVEL, unit: 'dB', def: 0 } : { curve: lin(-1, 1), unit: '±', def: 0 };
+      case 'master': return a[1] === 'comp' ? { curve: lin(0, 1), unit: '%', def: 0 } : null; // MAIN: not measured
+      case 'macro': return { curve: lin(-1, 1), unit: '±', def: 0 };
+    }
+    return null;
+  };
+
+  // ---------- exact values ----------
+  // What the S-4 has isn't always a CC's value: a project's values are exact (a pan at 0 sits between CC 63 and
+  // 64), and so are a fresh device's defaults. A knob shows that exact value until Live sends it a CC; from then
+  // on, that CC's value, which is what the S-4 then has.
+  //   tr.exact (a track's devices and modulators), st.exact (the mixer, COMPRESS, the macros): key -> the value,
+  //   or null once a CC went out. A key that isn't there: the S-4's default, unless exactOnly (set when Live
+  //   follows a project or sends everything), where nothing beyond the keys there is known.
+  function exactRef(id) {
+    const a = id.split('.');
+    switch (a[0]) {
+      case 'p': { const tr = st.tracks[+a[1]]; return { h: tr, key: tr.devices[a[2]] + '.' + a[3] }; }
+      case 'mod': { const tr = st.tracks[+a[1]]; return { h: tr, key: `mod.${tr.modTypes[Math.floor((+a[2] - 14) / 8)]}.${a[2]}` }; }
+      case 'mix': case 'macro': return { h: st, key: id };
+      case 'master': return a[1] === 'comp' ? { h: st, key: id } : null;
+    }
+    return null;
+  }
+  ctl.exact = function (id, v = ctl.get(id)) {
+    const r = exactRef(id), sp = r && ctl.spec(id);
+    if (!sp) return null;
+    const e = r.h.exact ? r.h.exact[r.key] : undefined;
+    const x = e !== undefined ? e : r.h.exactOnly ? null : sp.def;
+    return typeof x === 'number' && S4.params.cc(sp, x) === v ? x : null;
+  };
+  const sent = id => { const r = exactRef(id); if (r) (r.h.exact = r.h.exact || {})[r.key] = null; };
+  // follow.js: the values a project set ('DEV.cc', 'mod.TYPE.cc' on a track; 'mix.k.t', 'master.comp', 'macro.n')
+  ctl.setExact = (h, exact) => { h.exact = exact; h.exactOnly = true; };
+
   ctl.format = function (id, v) {
+    const sp = ctl.spec(id);
+    if (sp) { const x = ctl.exact(id, v); return S4.params.fmt(sp, x != null ? x : sp.curve.to(v)); }
     const i = ctl.info(id);
     return S4.fmtCC(v, i.bi, i.fmt);
+  };
+  // a typed value ("-6 dB", "1/16", "250 ms", "3 bars"; a plain number in the parameter's unit) -> CC, or null
+  ctl.parse = function (id, text) {
+    const sp = ctl.spec(id);
+    if (!sp) { const n = parseFloat(text); return Number.isFinite(n) ? S4.clamp(Math.round(n), 0, 127) : null; }
+    const v = S4.params.parse(sp, text);
+    return v == null ? null : S4.clamp(Math.round(sp.curve.from(v)), 0, 127);
   };
 
   // opts: { src: 'ui' | 'map:<id>' | 'reset' ..., send: false }
@@ -137,6 +228,7 @@
       const i = ctl.info(id);
       S4.midi.cc(i.ch, i.cc, v);
     }
+    sent(id); // the S-4 has this CC's value now, not an exact one
     save();
     S4.emit('val', id, opts.src || 'ui');
   };
@@ -279,15 +371,17 @@
 
   // Push the whole on-screen state to the S-4 (it cannot report its knobs back).
   ctl.dumpAll = function () {
-    const out = [];
+    const ids = [];
     st.tracks.forEach((tr, t) => {
-      S4.SLOTS.forEach(s => ctl.paramIds(t, s.id).forEach(id => { const i = ctl.info(id); out.push([0xB0 | (i.ch - 1), i.cc, ctl.get(id)]); }));
-      [0, 1, 2, 3].forEach(m => ctl.modIds(t, m).forEach(id => { const i = ctl.info(id); out.push([0xB0 | (i.ch - 1), i.cc, ctl.get(id)]); }));
-      ['lvl', 'pan', 'fltr'].forEach(k => { const i = ctl.info(`mix.${k}.${t}`); out.push([0xB0 | 15, i.cc, tr[k]]); });
+      S4.SLOTS.forEach(s => ids.push(...ctl.paramIds(t, s.id)));
+      [0, 1, 2, 3].forEach(m => ids.push(...ctl.modIds(t, m)));
+      ['lvl', 'pan', 'fltr'].forEach(k => ids.push(`mix.${k}.${t}`));
     });
-    out.push([0xB0 | 15, S4.MIX_CC.main, st.master.main], [0xB0 | 15, S4.MIX_CC.comp, st.master.comp]);
-    st.macros.forEach((v, i) => out.push([0xB0 | 14, S4.MACRO_CC + i, v]));
+    ids.push('master.main', 'master.comp', ...st.macros.map((_, i) => 'macro.' + (i + 1)));
+    const out = ids.map(id => { const i = ctl.info(id); sent(id); return [0xB0 | (i.ch - 1), i.cc, ctl.get(id)]; });
     S4.midi.sendBatch(out);
+    save();
+    S4.emit('device'); // the knobs now show what those CCs set
     return out.length;
   };
 

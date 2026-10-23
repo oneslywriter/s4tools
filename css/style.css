@@ -139,7 +139,8 @@ main { flex: 1; min-height: 0; display: flex; }
 .k-dial { width: 40px; height: 40px; overflow: visible; }
 .k-track { fill: none; stroke: var(--rule2); stroke-width: 3.2; stroke-linecap: round; }
 .k-arc { fill: none; stroke: var(--kc); stroke-width: 3.2; stroke-linecap: round; }
-.k-ptr { stroke: var(--ink); stroke-width: 2; stroke-linecap: round; }
+.k-ptr { fill: var(--ink); stroke: none; }
+.knob.exact .k-ptr { fill: none; stroke: var(--ink); stroke-width: .9; } /* the S-4 has this value exactly: no CC sent yet */
 .k-step { fill: var(--faint); }
 .k-val { font-size: 10.5px; color: var(--ink); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .k-val.k-edit { cursor: text; }
@@ -155,6 +156,7 @@ main { flex: 1; min-height: 0; display: flex; }
 .knob.k-inline .k-dial { width: 28px; height: 28px; }
 .knob.k-inline .k-val { min-width: 26px; text-align: left; }
 .kgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 10px 4px; justify-items: center; align-items: end; align-content: start; }
+.kgrid > .knob { width: 100%; min-width: 64px; } /* the whole column for the value ("0.039 beats", "PENTATONIC") */
 .gridsel { color: var(--ink); text-decoration: underline dotted; text-underline-offset: 2px; font-weight: 600; cursor: pointer; }
 
 /* ---------- slider (modals and the recorder) ---------- */

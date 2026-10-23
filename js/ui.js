@@ -18,6 +18,8 @@
       min: 0, max: 127, step: 1, center: 64,
       def: info.def, bi: info.bi,
       fmt: v => S4.ctl.format(id, v),
+      parse: t => S4.ctl.parse(id, t),
+      exact: () => S4.ctl.exact(id) != null,
       label: label || info.short,
       ccLabel: `CC ${info.cc} · CH ${info.ch}`,
     };
@@ -169,6 +171,14 @@
     const [x0, y0] = polar(a, r), [x1, y1] = polar(b, r);
     return `M${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 ${b - a > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
   };
+  // the pointer: a capsule from radius 6 to 12 at angle a, filled, or only outlined (hollow, .knob.exact)
+  const PW = 1.4;
+  const pointerPath = a => {
+    const t = ((a - 90) * Math.PI) / 180, nx = -Math.sin(t) * PW, ny = Math.cos(t) * PW;
+    const [x0, y0] = polar(a, 6), [x1, y1] = polar(a, 12), f = n => n.toFixed(2);
+    return `M${f(x0 + nx)} ${f(y0 + ny)}L${f(x1 + nx)} ${f(y1 + ny)}A${PW} ${PW} 0 0 0 ${f(x1 - nx)} ${f(y1 - ny)}`
+      + `L${f(x0 - nx)} ${f(y0 - ny)}A${PW} ${PW} 0 0 0 ${f(x0 + nx)} ${f(y0 + ny)}Z`;
+  };
   S4.knob = function (model, opts = {}) {
     const step = model.step || 1;
     const tp = model.taper || null;
@@ -195,7 +205,7 @@
         add('circle', 'k-step', { cx: x.toFixed(2), cy: y.toFixed(2), r: 0.9 });
       }
     }
-    const arc = add('path', 'k-arc'), ptr = add('line', 'k-ptr');
+    const arc = add('path', 'k-arc'), ptr = add('path', 'k-ptr');
     const val = h('span', { class: 'k-val' });
     const el = h('div', {
       class: 'knob' + (opts.size ? ' k-' + opts.size : '') + (model.bi ? ' bi' : '') + (model.disabled ? ' disabled' : '') + (opts.cls ? ' ' + opts.cls : ''),
@@ -207,9 +217,9 @@
     const upd = el._update = () => {
       const v = model.get(), a = A0 + (A1 - A0) * posOf(v);
       arc.setAttribute('d', arcPath(model.bi ? A0 + (A1 - A0) * posOf(center) : A0, a, 15));
-      const [x0, y0] = polar(a, 6), [x1, y1] = polar(a, 12);
-      ptr.setAttribute('x1', x0.toFixed(2)); ptr.setAttribute('y1', y0.toFixed(2));
-      ptr.setAttribute('x2', x1.toFixed(2)); ptr.setAttribute('y2', y1.toFixed(2));
+      ptr.setAttribute('d', pointerPath(a));
+      // hollow while the knob shows a value the S-4 has exactly (a project's, a default), solid once a CC went out
+      el.classList.toggle('exact', !!(model.exact && model.exact()));
       val.textContent = model.fmt ? model.fmt(v) : String(v);
     };
     const apply = v => { if (model.disabled) return; model.set(snap(v)); upd(); };

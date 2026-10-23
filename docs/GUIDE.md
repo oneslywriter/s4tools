@@ -73,12 +73,14 @@ Live shows the S-4's four tracks as four coloured lanes.
 
 **What the knobs show.** The S-4 never reports its knobs, so Live shows what s4tools last sent. When you pick a scene, **Follow the project** (on by default) moves the knobs to that scene's values in the Build project, so open your S-4's project in Build first. The mixer and the macros belong to the whole project, not to a scene, so Live takes them once: on the first scene you pick after exporting or opening a project. After that they stay as you set them, as they do on the S-4. **Settings › Resend** goes the other way and sends every value to the S-4.
 
+**Units.** The knobs show values as the S-4 has them: dB, Hz, seconds, note lengths, semitones, percent. A knob starts at the exact value the project sets, or a fresh device's default. Once Live sends it a CC (you move it, reset it, or Resend), it shows what that CC sets on the S-4, on the measured curves. The two can differ by a hair: PAN starts at 0, but no CC gives exactly 0, so the middle CC reads +0.8. A **hollow pointer** means the knob shows the S-4's exact value; it fills in once Live has sent that knob a CC. Where a parameter has modes (a rate in FREE, a wet as a SEND, a speed in a scale), Live shows the mode the Build project sets; without a project, the S-4's default mode. DISC START and LENGTH show beats or seconds once the project's sample is known, and a share of the sample before. MAIN shows its CC, since an S-4 project doesn't store it.
+
 ### Knobs
 
 - Drag up or down. Hold **Shift** for small steps.
 - Scroll the mouse wheel, or use the arrow keys; **Home** and **End** jump to the ends.
 - Double-click a knob to reset it to the S-4's own default (what a fresh device has).
-- Where the value is underlined when you point at it, click it and type.
+- Click the value to type one, in the knob's unit: "-6 dB", "1/16", "250 ms", "3 bars". A plain number is taken in that unit.
 
 ---
 

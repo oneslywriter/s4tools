@@ -208,21 +208,25 @@
 
   // Display in the parameter's unit.
   const trim = (x, dp) => { const s = x.toFixed(dp); return dp ? s.replace(/\.?0+$/, '') : s; };
+  // a signed number as shown: "+3", "-3", and "0" (no sign) when it rounds to zero
+  const signed = (v, s) => (Number(s) === 0 ? s.replace('-', '') : (v > 0 ? '+' : '') + s);
   P.fmt = (spec, v) => {
     if (v == null || Number.isNaN(v)) return '—';
     switch (spec.unit) {
       case '%': return trim(v * 100, Math.abs(v) < 0.1 ? 1 : 0) + '%';
-      case '±': return (v > 0 ? '+' : '') + trim(v * 100, Math.abs(v) < 0.1 ? 1 : 0);
-      case 'ms': return (v > 0 ? '+' : '') + (Math.abs(v) >= 1 ? trim(v, 3) + ' s' : trim(v * 1000, Math.abs(v) < 0.1 ? 1 : 0) + ' ms');
+      case '±': return signed(v, trim(v * 100, Math.abs(v) < 0.1 ? 1 : 0));
+      case 'ms': return Math.abs(v) >= 1 ? signed(v, trim(v, 3)) + ' s' : signed(v, trim(v * 1000, Math.abs(v) < 0.1 ? 1 : 0)) + ' ms';
       case 's': return v < 1 ? trim(v * 1000, v < 0.01 ? 2 : v < 0.1 ? 1 : 0) + ' ms' : trim(v, 2) + ' s';
-      case 'st': return (v > 0 ? '+' : '') + trim(v, Number.isInteger(v) ? 0 : 2) + ' st';
-      case 'dB': return v <= -99.9 ? '-INF' : (v > 0 ? '+' : '') + trim(v, 1) + ' dB';
+      case 'st': return signed(v, trim(v, Number.isInteger(v) ? 0 : 2)) + ' st';
+      case 'dB': return v <= -99.9 ? '-INF' : signed(v, trim(v, 1)) + ' dB';
       case 'x': return '×' + trim(v, 2);
       case 'idx': return String(Math.round(v));
       case 'div': return (P.DIVS[Math.round(v)] || String(Math.round(v))) + (spec.suffix || '');
       case 'off': return 'OFF';
       case 'Hz': return trim(v, v < 10 ? 3 : v < 100 ? 2 : 1) + ' Hz'; // like the S-4's screen: 1.008 Hz
       case 'beats': return trim(v, v < 0.1 ? 3 : 2) + (v === 1 ? ' beat' : ' beats');
+      case 'bars': return trim(v / 4, 2) + (v === 4 ? ' bar' : ' bars'); // stored in beats
+      case 'BPM': return trim(v, Number.isInteger(v) ? 0 : 1) + ' BPM';
       case 'scale': return P.SCALES[Math.round(v)] || String(Math.round(v));
       case 'dj': return Math.abs(v) < 0.0005 ? 'OFF' : (v < 0 ? 'LP ' : 'HP ') + trim(Math.abs(v) * 100, Math.abs(v) < 0.1 ? 1 : 0) + '%';
       default: return trim(v, 2);
@@ -244,13 +248,14 @@
       if (dj) return P.clampV(spec, (dj[1] === 'lp' ? -1 : 1) * parseFloat(dj[2]) / 100);
       if (t === 'off') return 0;
     }
-    const m = t.match(/^([+-]?\d*\.?\d+)\s*(ms|s|%|st|db|x|hz|beats?|b)?$/);
+    const m = t.match(/^([+-]?\d*\.?\d+)\s*(ms|s|%|st|db|x|hz|bpm|bars?|beats?|b)?$/);
     if (!m) return null;
     let v = parseFloat(m[1]);
     const u = m[2] || '';
     if (spec.unit === '%' || spec.unit === '±' || spec.unit === 'dj') v = u === '%' || !u ? v / 100 : v;
     else if (spec.unit === 'ms') v = u === 's' ? v : v / 1000;
     else if (spec.unit === 's') v = u === 'ms' || (!u && v > Math.max(spec.curve.to(0), spec.curve.to(127))) ? v / 1000 : v;
+    else if (spec.unit === 'bars') v = u === 'b' || u.startsWith('beat') ? v : v * 4; // bars typed, beats stored
     return P.clampV(spec, v);
   };
 

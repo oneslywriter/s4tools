@@ -975,8 +975,10 @@
     // the material's SPEED and TEMPO follow too (curves from S4T CAL4)
     const lin = S4.params.curves.lin, sc0 = S4.cr.proj.scenes[used[0]], tr0 = sc0.tracks.find(t => t.device === 'DISC' && t.sample);
     if (tr0) {
-      const sv = S4.s4p.stored(S4.cr.proj, tr0), vals = S4.state.tracks[sc0.tracks.indexOf(tr0)].vals;
-      ok(vals['DISC.46'] === Math.round(lin(-36, 36).from(sv.speed)) && vals['DISC.47'] === Math.round(lin(20, 999).from(sv.tempo)), 'DISC SPEED and TEMPO follow', [vals['DISC.46'], vals['DISC.47'], sv]);
+      const ti = sc0.tracks.indexOf(tr0), sv = S4.s4p.stored(S4.cr.proj, tr0), vals = S4.state.tracks[ti].vals;
+      const spd = S4.ctl.spec(`p.${ti}.material.46`), tmp = S4.ctl.spec(`p.${ti}.material.47`);
+      ok(vals['DISC.46'] === Math.round(spd.curve.from(sv.speed)) && vals['DISC.47'] === Math.round(tmp.curve.from(sv.tempo)), 'DISC SPEED and TEMPO follow', [vals['DISC.46'], vals['DISC.47'], sv]);
+      ok(S4.ctl.exact(`p.${ti}.material.47`) === sv.tempo, 'the TEMPO knob shows the project\'s exact value', [S4.ctl.exact(`p.${ti}.material.47`), sv.tempo]);
     }
     // the mixer belongs to the project: taken on the first launch after the import, then left to Live
     const mt = S4.cr.proj.mix.tracks[0], cs0 = S4.state.tracks[0];
@@ -1185,6 +1187,56 @@
     $$('#subbar .btn')[0].click(); pick('Export as a zip');
     await sleep(100);
     ok(/Nothing to export yet/.test($('#toast').textContent), 'nothing to export', $('#toast').textContent);
+  });
+
+  await section('live units', async () => {
+    view('live');
+    const st = S4.state, C = S4.ctl, keep = JSON.stringify(st.tracks[0]), keepSt = { exact: st.exact, exactOnly: st.exactOnly };
+    ok(st.tracks.some(t => t.mat && t.mat.dev), 'following a scene keeps the material\'s modes for the units');
+    // exact values: a fresh knob shows the S-4's default; once Live sent a CC, what that CC sets; after following
+    // a project, the project's value while the knob is still at its CC
+    st.exact = {}; st.exactOnly = false;
+    ok(C.format('mix.pan.0', 64) === '0' && C.format('mix.pan.0', 65) === '+2.4', 'a fresh PAN at CC 64 shows the S-4\'s default, 0', [C.format('mix.pan.0', 64), C.format('mix.pan.0', 65)]);
+    const panKnob = $('#view-live .knob[data-target="mix.pan.0"]');
+    st.tracks[0].pan = 64;
+    panKnob._update();
+    ok(panKnob.classList.contains('exact'), 'its pointer is hollow: the S-4 has the value exactly');
+    C.set('mix.pan.0', 64, { force: true });
+    ok(C.format('mix.pan.0', 64) === '+0.8', 'once Live sent CC 64, it shows what that sets: +0.8', C.format('mix.pan.0', 64));
+    ok(!panKnob.classList.contains('exact'), 'and its pointer is solid');
+    st.tracks[0].devices.material = 'DISC'; st.tracks[0].modes = {}; delete st.tracks[0].mat;
+    S4.ctl.setExact(st.tracks[0], { 'DISC.56': -6 });
+    ok(C.format('p.0.material.56', 55) === '-6 dB' && C.format('p.0.material.56', 56) !== '-6 dB', 'a project\'s -6 dB shows as such at its CC', C.format('p.0.material.56', 55));
+    ok(C.format('p.0.material.47', 13) === '120 BPM' && C.format('p.0.material.47', 14) !== '120 BPM', 'after a project, values it didn\'t set show their CC\'s', C.format('p.0.material.47', 14));
+    // the units, on CC values
+    S4.ctl.setExact(st.tracks[0], {}); S4.ctl.setExact(st, {}); S4.emit('device');
+    ok(C.format('mix.lvl.0', 96) === '0 dB' && C.format('mix.lvl.0', 0) === '-INF', 'mixer level in dB', C.format('mix.lvl.0', 96));
+    ok(C.format('p.0.material.47', 13) === '120 BPM' && C.format('p.0.material.56', 66) === '-0.2 dB', 'DISC TEMPO in BPM, LEVEL in dB', [C.format('p.0.material.47', 13), C.format('p.0.material.56', 66)]);
+    ok(C.format('p.0.granular.63', 85) === '1/16' && /\//.test(C.format('mod.0.14', 99)), 'rates as note lengths', C.format('mod.0.14', 99));
+    ok(C.parse('p.0.material.56', '0 dB') === 66 && C.parse('p.0.granular.63', '1/32') === 106 && C.parse('p.0.material.47', 'nonsense') === null, 'typed values become CCs');
+    st.tracks[0].modes = { 'MOSAIC.63': 'free' };
+    ok(/Hz$/.test(C.format('p.0.granular.63', 64)), 'a FREE rate from the project shows Hz', C.format('p.0.granular.63', 64));
+    st.tracks[0].devices.material = 'TAPE'; st.tracks[0].mat = { dev: 'TAPE', grid: 4, steps: 11.25, lengthMode: '1/1', speedMode: '' };
+    ok(C.format('p.0.material.49', 127) === '11 bars' && C.parse('p.0.material.49', '5') === 50, 'TAPE LENGTH in bars at the project tempo (90 BPM)');
+    // typing into a knob in the inspector
+    Object.assign(st.tracks[0], JSON.parse(keep));
+    st.tracks[0].devices.material = 'DISC'; S4.emit('device');
+    $$('#view-live .lane')[0].querySelectorAll('.tile')[0].click();
+    const k = $$('#view-live .lv-insp .knob').find(x => x.dataset.target === 'p.0.material.56'), kv = k && k.querySelector('.k-val.k-edit');
+    ok(!!kv, 'Live values can be typed');
+    if (kv) {
+      C.set('p.0.material.56', 100, { send: false });
+      take();
+      kv.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerId: 1 }));
+      const inp = $('#view-live .lv-insp .k-input');
+      ok(!!inp, 'a field opens');
+      if (inp) { inp.value = '-6 dB'; key(inp, 'Enter'); }
+      ok(C.get('p.0.material.56') === 55 && take().includes(hex([0xB0, 56, 55])), 'typed -6 dB sends CC 55', C.get('p.0.material.56'));
+    }
+    Object.assign(st.tracks[0], JSON.parse(keep));
+    Object.assign(st, keepSt);
+    S4.emit('device');
+    take();
   });
 
   await section('update notice', async () => {
