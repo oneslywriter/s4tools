@@ -211,6 +211,54 @@
   const appWarped = tr => tr.tempo === 'stretch' && tr.sample && tr.sample.bpm && A.canStretch(tr) && A.warpMode(tr) !== 's4';
   const renderWarp = (proj, tr) => S4.warp.renderAsync(A.derived(tr), { stretch: tr.sample.bpm / projTempo(proj), semis: A.stretchSemis(tr), mode: A.warpMode(tr) });
 
+  // The material's SPEED / TEMPO / START / LENGTH (DISC), SPEED / LENGTH (TAPE) and PITCH / START / LENGTH (POLY)
+  // as exportTrack writes them, in the S-4's units, worked out without building anything (for follow.js). A
+  // START / LENGTH on a grid comes with the grid in beats and the number of steps its knob moves through: the
+  // sample's length in grid steps (DISC), or the bars a TAPE holds at the project tempo (TAPE, measured at
+  // 120 BPM). secs: the sample's length as the S-4 gets it, null until Build has read the file. An imported
+  // track nobody changed gives the values the S-4 saved, which the export writes back as they are.
+  const tapeSteps = (proj, g) => Math.floor((TAPE_MAX_SECONDS * proj.bpm) / 60 / g + 1e-6);
+  function storedRaw(proj, tr, key, b) {
+    const val = k => (b[k] && typeof b[k].value === 'number' ? b[k].value : null), mode = k => (b[k] && b[k].mode) || '';
+    if (key === 'poly') return { pitch: val('pitch'), start: val('start'), length: val('length') };
+    const secs = tr.sample.dur, g = GRID_BEATS[mode('length')];
+    if (key === 'tape') return { speed: val('speed'), length: g ? val('length') : null, grid: g, steps: g ? tapeSteps(proj, g) : 0, secs };
+    const out = { speed: val('speed'), tempo: val('tempo'), secs };
+    if (secs == null) return out;
+    Object.assign(out, { start: val('start'), length: val('length') });
+    return mode('tempo') === 'free' || !g || out.tempo == null ? out : Object.assign(out, { grid: g, steps: Math.round((secs * out.tempo) / 60 / g) });
+  }
+  S4.s4p.stored = (proj, tr) => {
+    const was = ctxKey; // the key shift and the change check need this project's key; an export may be under way
+    ctxKey = proj.key || 'NONE';
+    try { return storedIn(proj, tr); } finally { ctxKey = was; }
+  };
+  function storedIn(proj, tr) {
+    const s = tr && tr.sample, key = tr && { DISC: 'disc', TAPE: 'tape', POLY: 'poly' }[tr.device];
+    if (!s || !key) return null;
+    const raw = tr.s4raw && tr.s4raw.material && tr.s4raw.material[key];
+    if (raw && tr.s4in === mapped(tr)) return storedRaw(proj, tr, key, raw);
+    if (tr.device === 'POLY') {
+      return { pitch: tr.pitchMode === 'free' ? tr.pitch || 0 : Math.round(tr.pitch || 0), start: (tr.pStart || 0) / 100, length: (tr.pLen != null ? tr.pLen : 100) / 100 };
+    }
+    const sb = s.bpm || proj.bpm, warp = appWarped(tr), PT = projTempo(proj);
+    let secs = s.dur != null ? (tr.trimOut - tr.trimIn) * s.dur : null;
+    if (secs != null && s.bpm) secs = (Math.ceil((secs * s.bpm) / 60 - 1e-3) * 60) / s.bpm; // padded to whole beats, as A.derived
+    if (tr.device === 'TAPE') {
+      const syncSemis = tr.tempo === 'sync' && s.bpm ? 12 * Math.log2(proj.bpm / s.bpm) : 0;
+      const t = tr.length ? (tr.length * 60) / (warp ? PT : sb) : secs != null && warp ? (secs * sb) / PT : secs;
+      return { speed: warp ? 0 : syncSemis + (tr.speed || 0), length: t != null ? (Math.min(TAPE_MAX_SECONDS, t) * proj.bpm) / 60 : null,
+        grid: 4, steps: tapeSteps(proj, 4), secs };
+    }
+    const stretch = !warp && tr.tempo === 'stretch' && s.bpm;
+    const sync = (tr.tempo === 'sync' || tr.tempo === 'stretch') && s.bpm;
+    const out = { speed: (stretch ? stretchSpeed(tr) : sync ? (warp ? V(0) : discSpeed(tr, 'octaves')) : discSpeed(tr, 'free')).value, tempo: warp ? PT : sb, secs };
+    if (secs == null) return out;
+    if (!sync) return Object.assign(out, { start: 0, length: secs });
+    const g = GRID_BEATS[tr.grid] || 1, total = (secs * sb) / 60, start = tr.start || 0;
+    return Object.assign(out, { start, length: tr.length || total - start, grid: g, steps: Math.round(total / g) });
+  }
+
   async function exportTrack(proj, tr, s, t, dir, files, warnings) {
     const out = tr.s4raw ? clone(tr.s4raw) : emptyTrack(s, t);
     const unchanged = tr.s4raw && tr.s4in === mapped(tr);
@@ -629,7 +677,8 @@
       const id = 'P' + hash(found.name + '|' + path + '|' + e.size);
       const file = path.split('/').pop();
       await S4.idb.put({ id, name: file, folder: '', bytes, type: 'audio/wav' });
-      const meta = { id, file, name: title || file.replace(/\.[^.]+$/, ''), folder: '', dur: null, sr: null, ch: null };
+      const info = wavInfo(bytes); // the length now, so Live's follow has it before Build ever plays the file
+      const meta = { id, file, name: title || file.replace(/\.[^.]+$/, ''), folder: '', dur: info ? info.secs : null, sr: info ? info.sr : null, ch: info ? info.ch : null };
       ids.set(path, meta);
       return meta;
     };

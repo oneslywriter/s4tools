@@ -523,7 +523,7 @@
       const secs = (d.blob.size - 44) / (48000 * 6);
       ok(secs > 0.35 && secs < 0.8, 'about half a second long', secs);
     }
-    // on sound, to the PC: pre-roll, then stops after 0.3 s of quiet
+    // threshold, to the PC: pre-roll, then stops after 0.3 s of quiet
     amp = 0;
     await sleep(700);
     await R.toggleArm();
@@ -538,7 +538,7 @@
     d = downloads.pop();
     ok(!!d, 'quiet ended the take and saved it');
     if (d) { const secs = (d.blob.size - 44) / (48000 * 6); ok(secs > 1.0 && secs < 1.6, 'pre-roll + sound + quiet ≈ 1.2 s', secs); }
-    // on sound, into T2 on the S-4: starts the S-4, REC on sound and again on quiet
+    // threshold, into T2 on the S-4: starts the S-4, REC on the threshold and again on quiet
     R.settings.target = 't1';
     S4.emit('rec');
     ok($('.rec-mon .tb') && $('.rec-mon .tb').dataset.target === 'btn.mon.1', 'MON button for T2');
@@ -557,11 +557,11 @@
     tap($('[data-target="btn.play"]'));
     await sleep(100);
     take();
-    // count-in, then a one-bar take on the PC
+    // pre-click, then a one-bar take on the PC
     Object.assign(R.settings, { mode: 'count', target: 'pc', takeBars: 1, bars: 1, click: 'visual' });
     S4.cr.proj.bpm = 240;
     S4.emit('rec');
-    ok($('.rec-count').textContent.startsWith('1 bar · silent'), 'count-in button', $('.rec-count').textContent);
+    ok($('.rec-count').textContent.startsWith('1 bar · no click'), 'pre-click button', $('.rec-count').textContent);
     s4playing = false; S4.state.playing = false;
     const t0 = performance.now();
     await R.toggleCount();
@@ -578,13 +578,13 @@
     tap($('[data-target="btn.play"]'));
     await sleep(100);
     take();
-    // count-in into MAIN: REC timestamped just after START; cancel works
+    // pre-click into MAIN: REC timestamped just after START; cancel works
     R.settings.target = 'main';
     s4playing = false; S4.state.playing = false;
     await R.toggleCount();
     await sleep(200);
     await R.toggleCount();
-    ok(!/^[1-4]$/.test($('.rec-arm').textContent) && !take().length, 'cancelled count-in sends nothing');
+    ok(!/^[1-4]$/.test($('.rec-arm').textContent) && !take().length, 'cancelled pre-click sends nothing');
     R.settings.takeBars = 0;
     const t1 = performance.now();
     await R.toggleCount();
@@ -597,10 +597,10 @@
     tap($('[data-target="btn.play"]'));
     await sleep(100);
     take();
-    // on a busy S-4 the count-in refuses
+    // on a busy S-4 the pre-click refuses
     S4.state.playing = true;
     await R.toggleCount();
-    ok(!$('.rec-arm').classList.contains('armed') && $('#toast').textContent.startsWith('Stop the S-4 first'), 'count-in refuses while playing');
+    ok(!$('.rec-arm').classList.contains('armed') && $('#toast').textContent.startsWith('Stop the S-4 first'), 'pre-click refuses while playing');
     S4.state.playing = false;
     R.stop();
     clearInterval(timer);
@@ -969,6 +969,22 @@
     ok(snap() === a, 'and back');
     const out = take();
     ok(out.length === 3 && out.every(x => x.startsWith('cf')), 'follow sends nothing but the program changes', out.slice(0, 5));
+    // the material's SPEED and TEMPO follow too (curves from S4T CAL4)
+    const lin = S4.params.curves.lin, sc0 = S4.cr.proj.scenes[used[0]], tr0 = sc0.tracks.find(t => t.device === 'DISC' && t.sample);
+    if (tr0) {
+      const sv = S4.s4p.stored(S4.cr.proj, tr0), vals = S4.state.tracks[sc0.tracks.indexOf(tr0)].vals;
+      ok(vals['DISC.46'] === Math.round(lin(-36, 36).from(sv.speed)) && vals['DISC.47'] === Math.round(lin(20, 999).from(sv.tempo)), 'DISC SPEED and TEMPO follow', [vals['DISC.46'], vals['DISC.47'], sv]);
+    }
+    // the mixer belongs to the project: taken on the first launch after the import, then left to Live
+    const mt = S4.cr.proj.mix.tracks[0], cs0 = S4.state.tracks[0];
+    ok(cs0.lvl === Math.round(S4.params.curves.rexp(-100, 6, 3).from(mt.lvl <= -95 ? -100 : mt.lvl)), 'the project mixer on the first launch', [cs0.lvl, mt.lvl]);
+    cs0.lvl = 5;
+    S4.ctl.launch(used[1] + 1);
+    ok(cs0.lvl === 5, 'later launches leave the mixer to Live');
+    S4.follow.fresh();
+    S4.ctl.launch(used[0] + 1);
+    ok(cs0.lvl !== 5 && snap() === a, 'after an export or an import the next launch takes it again');
+    take();
     S4.follow.settings.on = false;
     S4.ctl.launch(used[1] + 1);
     ok(snap() === a, 'off: knobs stay');
@@ -1137,19 +1153,19 @@
     pick('Play on the S-4');
     await sleep(800);
     ok(!S4.hw.on && $('#toast').classList.contains('show'), 'Play on S-4 explains why it cannot start', $('#toast').textContent);
-    // the count-in click here and on an S-4 track (none there)
+    // the pre-click click here and on an S-4 track (none there)
     const R = S4.rec;
     if (typeof MediaStreamTrackGenerator === 'function') {
       Object.assign(R.settings, { mode: 'count', target: 'pc', click: 's4' });
       S4.state.playing = false;
       await R.toggleCount();
-      ok(/isn.t there/.test($('#toast').textContent), 'bypass click without the S-4 output: silent count-in', $('#toast').textContent);
+      ok(/isn.t there/.test($('#toast').textContent), 'bypass click without the S-4 output: silent pre-click', $('#toast').textContent);
       await R.toggleCount();
       R.settings.click = 'local';
       await R.toggleCount();
       await sleep(300);
       await R.toggleCount();
-      ok(!$('.rec-arm').classList.contains('armed'), 'local click count-in started and cancelled');
+      ok(!$('.rec-arm').classList.contains('armed'), 'local click pre-click started and cancelled');
       R.stop();
       Object.assign(R.settings, { mode: 'thresh', click: 'visual' });
       S4.emit('rec');

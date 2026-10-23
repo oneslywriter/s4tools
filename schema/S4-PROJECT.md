@@ -23,23 +23,23 @@ The project.json inside a <NAME>.s4project folder, as saved by the Torso S-4 (OS
 | `data.global_slots.mixer.mix` | | object | Mixer values. Empty: all at their defaults (0 dB, centre, open, unmuted, no compression). |
 | `data.global_slots.mixer.mix.selected` |  | `0` | Always 0. |
 | `data.global_slots.mixer.mix.mix` | | object | Per-track level, pan, filter and mute, and the master compressor. |
-| `data.global_slots.mixer.mix.mix.level1` | **T1 LEVEL** | number -100 to 6 dB<br>default `0` | Track 1 mixer level in dB, -100 (off) to +6. Post-fader on the master and on the track's own USB return (VERIFY2). |
-| `data.global_slots.mixer.mix.mix.pan1` | **T1 PAN** | number -1 to 1 ±<br>default `0` | Track 1 pan, -1 (left) to +1 (right). Pan law (VERIFY3/4): exactly 0 = unity on both sides; otherwise L = 2 cos t, R = 2 sin t with t = (pan + 1) pi / 4. |
-| `data.global_slots.mixer.mix.mix.cutoff1` | **T1 FLTR** | number -1 to 1 ±<br>default `0` | Track 1 filter, -1 to +1 (0 = open). |
+| `data.global_slots.mixer.mix.mix.level1` | **T1 LEVEL** | number -100 to 6 dB<br>default `0` | Track 1 mixer level in dB, -100 (off) to +6, exponential knob with fine steps near the top (CC 46 on channel 16: 64 = -13.04 dB, 100 = +1.04 dB; CAL4). Post-fader on the master and on the track's own USB return (VERIFY2). |
+| `data.global_slots.mixer.mix.mix.pan1` | **T1 PAN** | number -1 to 1 ±<br>default `0` | Track 1 pan, -1 (left) to +1 (right), linear on CC 54, channel 16 (CAL4). Pan law (VERIFY3/4): exactly 0 = unity on both sides; otherwise L = 2 cos t, R = 2 sin t with t = (pan + 1) pi / 4. |
+| `data.global_slots.mixer.mix.mix.cutoff1` | **T1 FLTR** | number -1 to 1 ±<br>default `0` | Track 1 filter, -1 to +1 (0 = open), linear on CC 50, channel 16 (CAL4). |
 | `data.global_slots.mixer.mix.mix.mute1` | **T1 MUTE** | `0`, `1` <br>default `0` | Track 1 mute: 0 = playing, 1 = muted. |
-| `data.global_slots.mixer.mix.mix.level2` | **T2 LEVEL** | number -100 to 6 dB<br>default `0` | Track 2 mixer level in dB, -100 (off) to +6. Post-fader on the master and on the track's own USB return (VERIFY2). |
-| `data.global_slots.mixer.mix.mix.pan2` | **T2 PAN** | number -1 to 1 ±<br>default `0` | Track 2 pan, -1 (left) to +1 (right). Pan law (VERIFY3/4): exactly 0 = unity on both sides; otherwise L = 2 cos t, R = 2 sin t with t = (pan + 1) pi / 4. |
-| `data.global_slots.mixer.mix.mix.cutoff2` | **T2 FLTR** | number -1 to 1 ±<br>default `0` | Track 2 filter, -1 to +1 (0 = open). |
+| `data.global_slots.mixer.mix.mix.level2` | **T2 LEVEL** | number -100 to 6 dB<br>default `0` | Track 2 mixer level in dB, -100 (off) to +6, exponential knob with fine steps near the top (CC 47 on channel 16: 64 = -13.04 dB, 100 = +1.04 dB; CAL4). Post-fader on the master and on the track's own USB return (VERIFY2). |
+| `data.global_slots.mixer.mix.mix.pan2` | **T2 PAN** | number -1 to 1 ±<br>default `0` | Track 2 pan, -1 (left) to +1 (right), linear on CC 55, channel 16 (CAL4). Pan law (VERIFY3/4): exactly 0 = unity on both sides; otherwise L = 2 cos t, R = 2 sin t with t = (pan + 1) pi / 4. |
+| `data.global_slots.mixer.mix.mix.cutoff2` | **T2 FLTR** | number -1 to 1 ±<br>default `0` | Track 2 filter, -1 to +1 (0 = open), linear on CC 51, channel 16 (CAL4). |
 | `data.global_slots.mixer.mix.mix.mute2` | **T2 MUTE** | `0`, `1` <br>default `0` | Track 2 mute: 0 = playing, 1 = muted. |
-| `data.global_slots.mixer.mix.mix.level3` | **T3 LEVEL** | number -100 to 6 dB<br>default `0` | Track 3 mixer level in dB, -100 (off) to +6. Post-fader on the master and on the track's own USB return (VERIFY2). |
-| `data.global_slots.mixer.mix.mix.pan3` | **T3 PAN** | number -1 to 1 ±<br>default `0` | Track 3 pan, -1 (left) to +1 (right). Pan law (VERIFY3/4): exactly 0 = unity on both sides; otherwise L = 2 cos t, R = 2 sin t with t = (pan + 1) pi / 4. |
-| `data.global_slots.mixer.mix.mix.cutoff3` | **T3 FLTR** | number -1 to 1 ±<br>default `0` | Track 3 filter, -1 to +1 (0 = open). |
+| `data.global_slots.mixer.mix.mix.level3` | **T3 LEVEL** | number -100 to 6 dB<br>default `0` | Track 3 mixer level in dB, -100 (off) to +6, exponential knob with fine steps near the top (CC 48 on channel 16: 64 = -13.04 dB, 100 = +1.04 dB; CAL4). Post-fader on the master and on the track's own USB return (VERIFY2). |
+| `data.global_slots.mixer.mix.mix.pan3` | **T3 PAN** | number -1 to 1 ±<br>default `0` | Track 3 pan, -1 (left) to +1 (right), linear on CC 56, channel 16 (CAL4). Pan law (VERIFY3/4): exactly 0 = unity on both sides; otherwise L = 2 cos t, R = 2 sin t with t = (pan + 1) pi / 4. |
+| `data.global_slots.mixer.mix.mix.cutoff3` | **T3 FLTR** | number -1 to 1 ±<br>default `0` | Track 3 filter, -1 to +1 (0 = open), linear on CC 52, channel 16 (CAL4). |
 | `data.global_slots.mixer.mix.mix.mute3` | **T3 MUTE** | `0`, `1` <br>default `0` | Track 3 mute: 0 = playing, 1 = muted. |
-| `data.global_slots.mixer.mix.mix.level4` | **T4 LEVEL** | number -100 to 6 dB<br>default `0` | Track 4 mixer level in dB, -100 (off) to +6. Post-fader on the master and on the track's own USB return (VERIFY2). |
-| `data.global_slots.mixer.mix.mix.pan4` | **T4 PAN** | number -1 to 1 ±<br>default `0` | Track 4 pan, -1 (left) to +1 (right). Pan law (VERIFY3/4): exactly 0 = unity on both sides; otherwise L = 2 cos t, R = 2 sin t with t = (pan + 1) pi / 4. |
-| `data.global_slots.mixer.mix.mix.cutoff4` | **T4 FLTR** | number -1 to 1 ±<br>default `0` | Track 4 filter, -1 to +1 (0 = open). |
+| `data.global_slots.mixer.mix.mix.level4` | **T4 LEVEL** | number -100 to 6 dB<br>default `0` | Track 4 mixer level in dB, -100 (off) to +6, exponential knob with fine steps near the top (CC 49 on channel 16: 64 = -13.04 dB, 100 = +1.04 dB; CAL4). Post-fader on the master and on the track's own USB return (VERIFY2). |
+| `data.global_slots.mixer.mix.mix.pan4` | **T4 PAN** | number -1 to 1 ±<br>default `0` | Track 4 pan, -1 (left) to +1 (right), linear on CC 57, channel 16 (CAL4). Pan law (VERIFY3/4): exactly 0 = unity on both sides; otherwise L = 2 cos t, R = 2 sin t with t = (pan + 1) pi / 4. |
+| `data.global_slots.mixer.mix.mix.cutoff4` | **T4 FLTR** | number -1 to 1 ±<br>default `0` | Track 4 filter, -1 to +1 (0 = open), linear on CC 53, channel 16 (CAL4). |
 | `data.global_slots.mixer.mix.mix.mute4` | **T4 MUTE** | `0`, `1` <br>default `0` | Track 4 mute: 0 = playing, 1 = muted. |
-| `data.global_slots.mixer.mix.mix.compress_amount` | **COMPRESSOR** | number 0 to 1 %<br>default `0` | Master compressor amount, 0 to 1. |
+| `data.global_slots.mixer.mix.mix.compress_amount` | **COMPRESSOR** | number 0 to 1 %<br>default `0` | Master compressor amount, 0 to 1, linear on CC 58, channel 16 (CAL4). |
 | `data.global_slots.mixer.modulator1` | | see [modulator](#modulator) | Mix modulator 1 (default types RANDOM, RANDOM, WAVE, WAVE). |
 | `data.global_slots.mixer.modulator2` | | see [modulator](#modulator) | Mix modulator 2 (default types RANDOM, RANDOM, WAVE, WAVE). |
 | `data.global_slots.mixer.modulator3` | | see [modulator](#modulator) | Mix modulator 3 (default types RANDOM, RANDOM, WAVE, WAVE). |
@@ -64,21 +64,21 @@ The project.json inside a <NAME>.s4project folder, as saved by the Torso S-4 (OS
 | `data.global_slots.mixer.modulator_mappings.mix.mix.main_level` | | see [routes_mod](#routes-mod) |  |
 | `data.global_slots.perform` | | object | PERFORM macro values. Empty: all at 0. |
 | `data.global_slots.perform.perform` | | object | Macros 1-8 and the action macros. |
-| `data.global_slots.perform.perform.macro1` | **MACRO 1** | number -1 to 1 <br>default `0` | Macro 1's value, -1 to +1. Its polarity on the screen follows its routings' modes; this field's mode is a leftover ("" or "unipolar") that does not decide it. |
+| `data.global_slots.perform.perform.macro1` | **MACRO 1** | number -1 to 1 <br>default `0` | Macro 1's value, -1 to +1, linear on its CC (45 + 1, channel 15; CAL4). Its polarity on the screen follows its routings' modes; this field's mode is a leftover ("" or "unipolar") that does not decide it. |
 | | modes | `""`, `"unipolar"` | mode, as the S-4 stores it (its default as ""; a name the S-4 does not know is reset to ""): '' = (none); 'unipolar' = UNIPOLAR |
-| `data.global_slots.perform.perform.macro2` | **MACRO 2** | number -1 to 1 <br>default `0` | Macro 2's value, -1 to +1. Its polarity on the screen follows its routings' modes; this field's mode is a leftover ("" or "unipolar") that does not decide it. |
+| `data.global_slots.perform.perform.macro2` | **MACRO 2** | number -1 to 1 <br>default `0` | Macro 2's value, -1 to +1, linear on its CC (45 + 2, channel 15; CAL4). Its polarity on the screen follows its routings' modes; this field's mode is a leftover ("" or "unipolar") that does not decide it. |
 | | modes | `""`, `"unipolar"` | mode, as the S-4 stores it (its default as ""; a name the S-4 does not know is reset to ""): '' = (none); 'unipolar' = UNIPOLAR |
-| `data.global_slots.perform.perform.macro3` | **MACRO 3** | number -1 to 1 <br>default `0` | Macro 3's value, -1 to +1. Its polarity on the screen follows its routings' modes; this field's mode is a leftover ("" or "unipolar") that does not decide it. |
+| `data.global_slots.perform.perform.macro3` | **MACRO 3** | number -1 to 1 <br>default `0` | Macro 3's value, -1 to +1, linear on its CC (45 + 3, channel 15; CAL4). Its polarity on the screen follows its routings' modes; this field's mode is a leftover ("" or "unipolar") that does not decide it. |
 | | modes | `""`, `"unipolar"` | mode, as the S-4 stores it (its default as ""; a name the S-4 does not know is reset to ""): '' = (none); 'unipolar' = UNIPOLAR |
-| `data.global_slots.perform.perform.macro4` | **MACRO 4** | number -1 to 1 <br>default `0` | Macro 4's value, -1 to +1. Its polarity on the screen follows its routings' modes; this field's mode is a leftover ("" or "unipolar") that does not decide it. |
+| `data.global_slots.perform.perform.macro4` | **MACRO 4** | number -1 to 1 <br>default `0` | Macro 4's value, -1 to +1, linear on its CC (45 + 4, channel 15; CAL4). Its polarity on the screen follows its routings' modes; this field's mode is a leftover ("" or "unipolar") that does not decide it. |
 | | modes | `""`, `"unipolar"` | mode, as the S-4 stores it (its default as ""; a name the S-4 does not know is reset to ""): '' = (none); 'unipolar' = UNIPOLAR |
-| `data.global_slots.perform.perform.macro5` | **MACRO 5** | number -1 to 1 <br>default `0` | Macro 5's value, -1 to +1. Its polarity on the screen follows its routings' modes; this field's mode is a leftover ("" or "unipolar") that does not decide it. |
+| `data.global_slots.perform.perform.macro5` | **MACRO 5** | number -1 to 1 <br>default `0` | Macro 5's value, -1 to +1, linear on its CC (45 + 5, channel 15; CAL4). Its polarity on the screen follows its routings' modes; this field's mode is a leftover ("" or "unipolar") that does not decide it. |
 | | modes | `""`, `"unipolar"` | mode, as the S-4 stores it (its default as ""; a name the S-4 does not know is reset to ""): '' = (none); 'unipolar' = UNIPOLAR |
-| `data.global_slots.perform.perform.macro6` | **MACRO 6** | number -1 to 1 <br>default `0` | Macro 6's value, -1 to +1. Its polarity on the screen follows its routings' modes; this field's mode is a leftover ("" or "unipolar") that does not decide it. |
+| `data.global_slots.perform.perform.macro6` | **MACRO 6** | number -1 to 1 <br>default `0` | Macro 6's value, -1 to +1, linear on its CC (45 + 6, channel 15; CAL4). Its polarity on the screen follows its routings' modes; this field's mode is a leftover ("" or "unipolar") that does not decide it. |
 | | modes | `""`, `"unipolar"` | mode, as the S-4 stores it (its default as ""; a name the S-4 does not know is reset to ""): '' = (none); 'unipolar' = UNIPOLAR |
-| `data.global_slots.perform.perform.macro7` | **MACRO 7** | number -1 to 1 <br>default `0` | Macro 7's value, -1 to +1. Its polarity on the screen follows its routings' modes; this field's mode is a leftover ("" or "unipolar") that does not decide it. |
+| `data.global_slots.perform.perform.macro7` | **MACRO 7** | number -1 to 1 <br>default `0` | Macro 7's value, -1 to +1, linear on its CC (45 + 7, channel 15; CAL4). Its polarity on the screen follows its routings' modes; this field's mode is a leftover ("" or "unipolar") that does not decide it. |
 | | modes | `""`, `"unipolar"` | mode, as the S-4 stores it (its default as ""; a name the S-4 does not know is reset to ""): '' = (none); 'unipolar' = UNIPOLAR |
-| `data.global_slots.perform.perform.macro8` | **MACRO 8** | number -1 to 1 <br>default `0` | Macro 8's value, -1 to +1. Its polarity on the screen follows its routings' modes; this field's mode is a leftover ("" or "unipolar") that does not decide it. |
+| `data.global_slots.perform.perform.macro8` | **MACRO 8** | number -1 to 1 <br>default `0` | Macro 8's value, -1 to +1, linear on its CC (45 + 8, channel 15; CAL4). Its polarity on the screen follows its routings' modes; this field's mode is a leftover ("" or "unipolar") that does not decide it. |
 | | modes | `""`, `"unipolar"` | mode, as the S-4 stores it (its default as ""; a name the S-4 does not know is reset to ""): '' = (none); 'unipolar' = UNIPOLAR |
 | `data.global_slots.perform.perform.action1` | | object | Action macro 1 (MACRO 9): 0 = released, 1 = held / toggled on. |
 | `data.global_slots.perform.perform.action1.value` |  | `0`, `1` |  |
@@ -91,7 +91,7 @@ The project.json inside a <NAME>.s4project folder, as saved by the Torso S-4 (OS
 | `data.global_slots.scene` | | object | How scenes follow each other (Scene view settings). Empty: the S-4's defaults (NEXT, 100 %, QUANTIZE 1/1). |
 | `data.global_slots.scene.scene` | | object | RULE, CHANCE and QUANTIZE. |
 | `data.global_slots.scene.scene.chance` | **CHANCE** | number 0 to 1 %<br>default `1` | Chance that a chained scene moves on, 0 to 1 (0.598 = 60 %). |
-| `data.global_slots.scene.scene.rule` | **RULE** | `0`, `1`, `2`, `3`, `4` <br>default `0` | Where a chain moves next: 0 = NEXT, 1 = PREV, 2 = WALK, 3 = RANDOM, 4 = SAME (menu order). |
+| `data.global_slots.scene.scene.rule` | **RULE** | `0`, `1`, `2`, `3`, `4` <br>default `0` | Where a chain moves next: 0 = NEXT, 1 = PREV, 2 = WALK, 3 = RANDOM, 4 = SAME (as named on the screen). |
 | `data.global_slots.scene.scene.quantize` | **QUANTIZE** | number <br>default `5` | When a launched scene starts (saved on the S-4, 2026-10-20). The S-4's default is "" with 5 (1/1). |
 | | mode `""` | integer 0 to 11 | mode '' = STRAIGHT (the default): value = note-length step, a whole number: 0 = 32/1, 1 = 16/1, 2 = 8/1, 3 = 4/1, 4 = 2/1, 5 = 1/1, 6 = 1/2, 7 = 1/4, 8 = 1/8, 9 = 1/16, 10 = 1/32, 11 = 1/64 (every step timed on the S-4, VERIFY4-6) |
 | | mode `"triplet"` | integer 0 to 11 | mode 'triplet' = TRIPLET: the same steps as triplets |
@@ -138,7 +138,7 @@ The project.json inside a <NAME>.s4project folder, as saved by the Torso S-4 (OS
 | `data.global_slots.scene_list_state.<key>.is_locked` |  | boolean | LOCK. |
 | `data.settings` | | object | The project's settings pages. |
 | `data.settings.audio_settings` | | object | AUDIO settings. |
-| `data.settings.audio_settings.input_source` |  | `0`, `1`, `2`, `3` | INPUT: 0 = IN1/IN2, 1 = MIC, 2 = IN1/MIC, 3 = HEADSET (menu order). |
+| `data.settings.audio_settings.input_source` |  | `0`, `1`, `2`, `3` | INPUT: 0 = IN1/IN2, 1 = MIC, 2 = IN1/MIC, 3 = HEADSET (as named on the screen). |
 | `data.settings.audio_settings.mic_gain` |  | integer 0 to 100 | MIC GAIN, 0 to 100. |
 | `data.settings.audio_settings.track1_input` |  | `0`, `1`, `2`, `3` | TRACK 1 INPUT: 0 = STEREO, 1 = IN1, 2 = IN2, 3 = SENDS ONLY. |
 | `data.settings.audio_settings.track2_input` |  | `0`, `1`, `2`, `3` | TRACK 2 INPUT: 0 = STEREO, 1 = IN1, 2 = IN2, 3 = SENDS ONLY. |
@@ -218,7 +218,7 @@ DISC: sample playback streamed from disk.
 
 | Field | On the S-4 | Values | Description |
 |---|---|---|---|
-| `disc.speed` | **SPEED**<br>CC 46 | number st<br>default `0` `"octaves"` | Varispeed in semitones (pitch and tempo move together; verified to 0.1 cent, VERIFY). With TEMPO "stretch" this field is the stretch PITCH instead. In SYNC the S-4 offers no scale and moves in octaves, but a scale stored here still sets the knob's steps (VERIFY5). |
+| `disc.speed` | **SPEED**<br>CC 46 | number st<br>default `0` `"octaves"` | Varispeed in semitones (pitch and tempo move together; verified to 0.1 cent, VERIFY). With TEMPO "stretch" this field is the stretch PITCH instead. In SYNC the S-4 offers no scale and moves in octaves, but a scale stored here still sets the knob's steps (VERIFY5). CC 46 covers -36 to +36 linearly; OCTAVES and the scales take the nearest step, STRETCH whole semitones (CAL4). |
 | | mode `"octaves"` | `-36`, `-24`, `-12`, `0`, `12`, `24`, `36` | mode 'octaves' = OCTAVES: whole octaves (the S-4's own SYNC saves always use it) |
 | | mode `"chromatic"` | 73 values: `-36`, `-35` … `36` | mode 'chromatic' = CHROMATIC: semitones on this scale's notes |
 | | mode `"major"` | 43 values: `-36`, `-34` … `36` | mode 'major' = MAJOR: semitones on this scale's notes |
@@ -239,9 +239,9 @@ DISC: sample playback streamed from disk.
 | | mode `"tetratonic"` | 25 values: `-36`, `-32` … `36` | mode 'tetratonic' = TETRATONIC: semitones on this scale's notes |
 | | mode `"fifths"` | `-36`, `-29`, `-24`, `-17`, `-12`, `-5`, `0`, `7`, `12`, `19`, `24`, `31`, `36` | mode 'fifths' = FIFTHS: semitones on this scale's notes |
 | | mode `"free"` | number -36 to 36 | mode 'free' = FREE: continuous semitones, -36 to +36 (offered with TEMPO "free") |
-| `disc.tempo` | **TEMPO**<br>CC 47 | number 0 to … BPM<br>default `120` `"sync"` | value = the sample's own tempo in BPM (what SYNC and STRETCH scale from); 20 to 220 seen. mode = the tempo mode. |
+| `disc.tempo` | **TEMPO**<br>CC 47 | number 0 to … BPM<br>default `120` `"sync"` | value = the sample's own tempo in BPM (what SYNC and STRETCH scale from). mode = the tempo mode. CC 47 covers 20 to 999 BPM linearly, in whole BPM in SYNC (CAL4). |
 | | modes | `"sync"`, `"stretch"`, `"free"` | mode, as the S-4 stores it (its default as ""; a name the S-4 does not know is reset to ""): 'sync' = SYNC (varispeed to the project tempo: rate = project / sample tempo (pitch follows)); 'stretch' = STRETCH (the S-4 time-stretches to the project tempo (granular, grains ~24 ms at 83.6 Hz); SPEED holds the PITCH); 'free' = AS RECORDED (plays at its own speed; START and LENGTH are in seconds) |
-| `disc.start` | **START**<br>CC 48 | number beats<br>default `0` `"1/1"` | Start of the loop region: beats from the sample start (mode = the grid it snaps to), or seconds when mode is "free" (TEMPO "free"). |
+| `disc.start` | **START**<br>CC 48 | number beats<br>default `0` `"1/1"` | Start of the loop region: beats from the sample start (mode = the grid it snaps to), or seconds when mode is "free" (TEMPO "free"). CC 48 steps evenly through the grid steps in the sample (0 to the last one), or 0 to the sample's seconds in FREE (CAL4). |
 | | mode `"8/1"` | number 0 to … | mode '8/1' = 8/1: grid 8/1; value in beats |
 | | mode `"4/1"` | number 0 to … | mode '4/1' = 4/1: grid 4/1; value in beats |
 | | mode `"2/1"` | number 0 to … | mode '2/1' = 2/1: grid 2/1; value in beats |
@@ -253,7 +253,7 @@ DISC: sample playback streamed from disk.
 | | mode `"1/32"` | number 0 to … | mode '1/32' = 1/32: grid 1/32; value in beats |
 | | mode `"1/64"` | number 0 to … | mode '1/64' = 1/64: grid 1/64; value in beats |
 | | mode `"free"` | number 0 to … | mode 'free' = FREE: seconds |
-| `disc.length` | **LENGTH**<br>CC 49 | number beats<br>default `4` `"1/1"` | Length of the loop region: beats (mode = grid), or seconds when mode is "free". With LOOP off and a LENGTH longer than the sample, the sample plays once and then silence. |
+| `disc.length` | **LENGTH**<br>CC 49 | number beats<br>default `4` `"1/1"` | Length of the loop region: beats (mode = grid), or seconds when mode is "free". With LOOP off and a LENGTH longer than the sample, the sample plays once and then silence. CC 49 steps evenly from one grid step to the whole sample, or 0 to the sample's seconds in FREE (CAL4). |
 | | mode `"8/1"` | number 0 to … | mode '8/1' = 8/1: grid 8/1; value in beats |
 | | mode `"4/1"` | number 0 to … | mode '4/1' = 4/1: grid 4/1; value in beats |
 | | mode `"2/1"` | number 0 to … | mode '2/1' = 2/1: grid 2/1; value in beats |
@@ -289,7 +289,7 @@ TAPE: a recordable tape loop.
 
 | Field | On the S-4 | Values | Description |
 |---|---|---|---|
-| `tape.speed` | **SPEED**<br>CC 46 | number st<br>default `0` | Varispeed in semitones. |
+| `tape.speed` | **SPEED**<br>CC 46 | number st<br>default `0` | Varispeed in semitones. CC 46 covers -36 to +36 linearly; OCTAVES and the scales take the nearest step (CAL4). |
 | | mode `""` | `-36`, `-24`, `-12`, `0`, `12`, `24`, `36` | mode '' = OCTAVES (the default): whole octaves (the default; verified -12 = 220.00 Hz from 440, VERIFY) |
 | | mode `"chromatic"` | 73 values: `-36`, `-35` … `36` | mode 'chromatic' = CHROMATIC: semitones on this scale's notes |
 | | mode `"major"` | 43 values: `-36`, `-34` … `36` | mode 'major' = MAJOR: semitones on this scale's notes |
@@ -311,7 +311,7 @@ TAPE: a recordable tape loop.
 | | mode `"fifths"` | `-36`, `-29`, `-24`, `-17`, `-12`, `-5`, `0`, `7`, `12`, `19`, `24`, `31`, `36` | mode 'fifths' = FIFTHS: semitones on this scale's notes |
 | | mode `"free"` | number -36 to 36 | mode 'free' = FREE: continuous semitones |
 | `tape.rotate` | **ROTATE**<br>CC 48 | number -1 to 1 ±<br>default `0` | Rotate the tape loop, -1 to +1. |
-| `tape.length` | **LENGTH**<br>CC 49 | number beats | Tape length in beats at the project tempo, counted in tape time (VERIFY: a 100 BPM tape at 120 needs 9.6 beats), on the grid in mode; seconds in "free" (8.749521 s matched a recorded tape of 8.7495 s). |
+| `tape.length` | **LENGTH**<br>CC 49 | number beats | Tape length in beats at the project tempo, counted in tape time (VERIFY: a 100 BPM tape at 120 needs 9.6 beats), on the grid in mode; seconds in "free" (8.749521 s matched a recorded tape of 8.7495 s). On the 1/1 grid at 120 BPM, CC 49 steps evenly through 1 to 15 bars, the 30 s a TAPE holds (CAL4). |
 | | mode `"8/1"` | number 0 to … | mode '8/1' = 8/1: grid 8/1; value in beats |
 | | mode `"4/1"` | number 0 to … | mode '4/1' = 4/1: grid 4/1; value in beats |
 | | mode `"2/1"` | number 0 to … | mode '2/1' = 2/1: grid 2/1; value in beats |
@@ -339,11 +339,11 @@ POLY: the sample played polyphonically from MIDI notes.
 
 | Field | On the S-4 | Values | Description |
 |---|---|---|---|
-| `poly.pitch` | **PITCH**<br>CC 46 | number st<br>default `0` | Pitch in semitones. MIDI note 60 plays the sample at its own pitch (VERIFY). |
-| | mode `""` | integer | mode '' = CHROMATIC (the default): whole semitones (verified +3 = +300.1 cents) |
+| `poly.pitch` | **PITCH**<br>CC 46 | number st<br>default `0` | Pitch in semitones. MIDI note 60 plays the sample at its own pitch (VERIFY). CC 46 covers -12 to +12 linearly in both modes (CAL4). |
+| | mode `""` | number | mode '' = CHROMATIC (the default): whole semitones (verified +3 = +300.1 cents); set over MIDI, the S-4 stores the value unrounded (CAL4) |
 | | mode `"free"` | number -12 to 12 | mode 'free' = FREE: continuous semitones, -12 to +12, linear (verified +2.5 = +250.0 cents) |
-| `poly.start` | **START**<br>CC 48 | number 0 to 1 %<br>default `0` | Start as a fraction of the sample, 0 to 1. |
-| `poly.length` | **LENGTH**<br>CC 49 | number 0 to 1 %<br>default `1` | Length as a fraction of the sample, 0 to 1 (1 = to the end). |
+| `poly.start` | **START**<br>CC 48 | number 0 to 1 %<br>default `0` | Start as a fraction of the sample, 0 to 1, linear on CC 48 (CAL4). |
+| `poly.length` | **LENGTH**<br>CC 49 | number 0 to 1 %<br>default `1` | Length as a fraction of the sample, 0 to 1 (1 = to the end), linear on CC 49 (CAL4). |
 | `poly.level` | **LEVEL**<br>CC 50 | number -100 to 12 dB<br>default `0` | Level in dB, -100 (off) to +12, exponential knob with fine steps near the top. 0 dB = unity (VERIFY: -6 dB measures -6.00 dB). |
 | `poly.loop` | **LOOP**<br>CC 52 | number 0 to 1 %<br>default `0` | Loop point as a fraction, 0 to 1. |
 | `poly.loop_mode` | **LOOP MODE** | `0`, `1`, `2` <br>default `0` | LOOP MODE: 0 = off, 1 = loop, 2 = ping-pong. |
@@ -515,7 +515,7 @@ WAVE modulator values (the S-4's defaults where missing). x-cc is n in cc = 14 +
 | `wave.curve` | **CURVE**<br>CC 6 | number -1 to 1 ±<br>default `0` | Curve, -1 to +1. |
 | `wave.spread` | **SPREAD**<br>CC 7 | number -1 to 1 ±<br>default `0` | Stereo spread, -1 to +1. |
 | `wave.shape` | **SHAPE** | `0`, `1`, `2` <br>default `0` | SHAPE: 0 = SINE, 1 = TRIANGLE, 2 = SQUARE (measured on the pitch trace, read on the screen; VERIFY5). |
-| `wave.midi_trig` | **MIDI TRIG** | `0`, `1` <br>default `0` | Restart the LFO on MIDI notes (0 off, 1 on). |
+| `wave.midi_trig` | **MIDI TRIG** | `0`, `1` <br>default `0` | Stored with every WAVE modulator, but the S-4 has no setting for it (checked on the screen, 2026-10-22). 0 in every save; kept as stored. |
 
 ## random
 
@@ -536,7 +536,7 @@ RANDOM modulator values (the S-4's defaults where missing). x-cc is n in cc = 14
 | `random.smoothing` | **SMOOTH**<br>CC 6 | number 0 to 1 %<br>default `0.001` | Smoothing, 0 to 1. A fresh RANDOM is at 0.001. |
 | `random.spread` | **SPREAD**<br>CC 7 | number -1 to 1 ±<br>default `0` | Stereo spread, -1 to +1. |
 | `random.buffer` |  | array[32] of number -1 to 1 | The random sequence: 32 numbers from -1 to 1. Written by the S-4 and kept as stored (float32); a new modulator gets random values. |
-| `random.midi_trig` | **MIDI TRIG** | `0`, `1` <br>default `0` | Restart the sequence on MIDI notes (0 off, 1 on). |
+| `random.midi_trig` | **MIDI TRIG** | `0`, `1` <br>default `0` | Stored with every RANDOM modulator, but the S-4 has no setting for it (checked on the screen, 2026-10-22). 0 in every save; kept as stored. |
 
 ## follow
 

@@ -167,7 +167,6 @@
       extras.push(S4.seg(['SINE', 'TRIANGLE', 'SQUARE'].map((l, i) => ({ label: l, value: i })), vals && vals.shape ? vals.shape.value : 0,
         v => { live().shape = { value: v }; o.changed(); }, 'mini'));
     }
-    if (type === 'WAVE' || type === 'RANDOM') extras.push(toggle('midi_trig', 'MIDI TRIG', 'Starts over on each MIDI note'));
     if (type === 'FOLLOW') extras.push(toggle('stereo_input', 'STEREO', 'Follows left and right on their own'));
     const knobs = def.params.map(sp => {
       const mode = modeOf(sp), ms = P.inMode(sp, mode);

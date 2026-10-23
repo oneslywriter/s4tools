@@ -16,11 +16,11 @@
     if (g === 3) row.push([0, [47], v], [1, [49], v], j < 4 ? [2, [46], c4(j)] : [2, [47], c4(j - 4)], [3, [46], v]);
     plan.push(row.flatMap(([t, ccs, val]) => ccs.map(cc => [t, cc, val])));
   }
-  // mixer (ch 16): LEVEL 46-49, FILTER 50-53, PAN 54-57 at 4 values each, COMPRESS 58; macros 1-8 (ch 15, CC 46-53)
+  // mixer (ch 16): LEVEL 46-49, FILTER 50-53, PAN 54-57 at 4 values each, COMPRESS 58, MAIN 61; macros 1-8 (ch 15, CC 46-53)
   const four = [0, 64, 100, 127], eight = [0, 18, 36, 54, 73, 91, 109, 127];
   const mix = [];
   four.forEach((v, t) => mix.push([16, 46 + t, v], [16, 50 + t, [0, 32, 96, 127][t]], [16, 54 + t, [0, 32, 96, 127][t]]));
-  mix.push([16, 58, 64]);
+  mix.push([16, 58, 64], [16, 61, 80]);
   eight.forEach((v, k) => mix.push([15, 46 + k, v]));
   window._cal4 = { scenes: plan, mix };
   const pc = M.settings.pcCh, sleep = ms => new Promise(r => setTimeout(r, ms));

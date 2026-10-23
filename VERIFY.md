@@ -194,6 +194,31 @@ Imported, the S-4's own SAMPLE END / TRACK 2 save shows as such and exports unch
 
   So the tape starts 45 ms into the sound, already at -13 dB. About 11 ms of that is before the REC goes out (the rise to the threshold and the rest of Chrome's 10 ms block); the rest is the audio reaching the PC, the note reaching the S-4 and the S-4 starting to record, which the app can't shorten. One take, so expect a few ms either way. A PC take with pre-roll keeps the whole sound.
 
+## Calibration round 4: the CC curves Live lacked (2026-10-22)
+
+**S4T CAL4** (`tools/cal4_build.js`) has 32 scenes of a 4 s, 220 Hz sine (8 beats at 120 BPM), with the material in each tempo and speed mode. `tools/cal4_send.js` set one or two parameters per track over MIDI, scene by scene, at CC 0, 18, 36, 54, 73, 91, 109 and 127. It then set the mixer, COMPRESS, MAIN and macros 1–8, and the S-4 saved the project. `tools/cal4_fit.py` checks each curve against the saved project.json: every value matches to float precision. x = CC / 127.
+
+| Parameter (CC) | Stored value |
+|---|---|
+| DISC / TAPE SPEED (46) | −36 + 72x semitones; OCTAVES and the scales take the nearest step, DISC STRETCH whole semitones |
+| DISC TEMPO (47) | 20 + 979x BPM in every tempo mode; whole BPM in SYNC |
+| DISC START (48), SYNC | grid step round(x (n − 1)) of the n steps in the sample (grid 1/4: 0–7 beats; grid 1/16: 0–7.75) |
+| DISC LENGTH (49), SYNC | grid steps round(x (n − 1)) + 1 (1/4: 1–8 beats; 1/16: 0.25–8) |
+| DISC START / LENGTH, AS RECORDED | x times the sample's length in seconds (0–4 s) |
+| TAPE LENGTH (49), grid 1/1 | 1 + round(14x) bars, 4–60 beats at 120 BPM (60 beats = the 30 s a TAPE holds) |
+| TAPE LEVEL (50) | the material LEVEL curve: −100 to +12 dB (−50.63 dB at 18, +2.64 dB at 73) |
+| POLY PITCH (46) | −12 + 24x semitones, unrounded in CHROMATIC too |
+| POLY START / LENGTH (48 / 49) | x |
+| Mixer LEVEL (46–49, ch 16) | −100 to +6 dB, the same exponential shape with k = 3: 0 → −100, 64 → −13.04, 100 → +1.04, 127 → +6 |
+| Mixer PAN (54–57) / FILTER (50–53) | −1 + 2x |
+| COMPRESS (58) | x (64 → 0.504) |
+| MACRO 1–8 (46–53, ch 15) | −1 + 2x |
+| MAIN (61) | not stored in the project |
+
+The save also showed two things the app doesn't depend on. The S-4 added `default_sample_tempo` to the unused DISC entry of TAPE and POLY tracks. After TEMPO or SPEED was set on a STRETCH DISC, it changed that DISC's START / LENGTH grid (to 1/1 and 1/16).
+
+Fed back into Live (`S4.follow.apply` on the imported save), every followed CC gives back the stored value. Stepped values come back as a different CC in the same step.
+
 ## Not verified on the S-4
 
 Nothing is left open from the sanity check (VERIFY to VERIFY6, 2026-10-16 to 2026-10-20).

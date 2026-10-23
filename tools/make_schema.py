@@ -189,7 +189,7 @@ MODS = {
         'skew': bi('SKEW', 4, 'Skew, -1 to +1.'), 'fold': pct('FOLD', 5, 'Fold, 0 to 1.'), 'curve': bi('CURVE', 6, 'Curve, -1 to +1.'), 'spread': bi('SPREAD', 7, 'Stereo spread, -1 to +1.'),
         'shape': {'type': 'object', 'description': 'SHAPE: 0 = SINE, 1 = TRIANGLE, 2 = SQUARE (measured on the pitch trace, read on the screen; VERIFY5).', 'x-label': 'SHAPE',
                   'default': {'value': 0}, 'properties': {'value': {'enum': [0, 1, 2]}}, 'required': ['value'], 'additionalProperties': False},
-        'midi_trig': toggle('MIDI TRIG', 'Restart the LFO on MIDI notes (0 off, 1 on).'),
+        'midi_trig': toggle('MIDI TRIG', 'Stored with every WAVE modulator, but the S-4 has no setting for it (checked on the screen, 2026-10-22). 0 in every save; kept as stored.'),
     }),
     'random': (1, 'RANDOM', {
         'rate': param('RATE', 'Step rate of the random sequence.', num(2, 11, True), 'div', 9, 0, SYNC_RATE(2, 11, 50)),
@@ -198,7 +198,7 @@ MODS = {
         'variation': pct('VARIATION', 5, 'Variation, 0 to 1.'), 'smoothing': pct('SMOOTH', 6, 'Smoothing, 0 to 1. A fresh RANDOM is at 0.001.', 0.001),
         'spread': bi('SPREAD', 7, 'Stereo spread, -1 to +1.'),
         'buffer': {'type': 'array', 'description': 'The random sequence: 32 numbers from -1 to 1. Written by the S-4 and kept as stored (float32); a new modulator gets random values.', 'items': num(-1, 1), 'minItems': 32, 'maxItems': 32},
-        'midi_trig': toggle('MIDI TRIG', 'Restart the sequence on MIDI notes (0 off, 1 on).'),
+        'midi_trig': toggle('MIDI TRIG', 'Stored with every RANDOM modulator, but the S-4 has no setting for it (checked on the screen, 2026-10-22). 0 in every save; kept as stored.'),
     }),
     'follow': (2, 'FOLLOW', {
         'delay_time': param('DELAY', 'Delay in seconds, 0 to 2, exponential knob.', num(0, 2), 's', 0, 0),
@@ -232,18 +232,18 @@ MODS = {
 LEVEL = lambda label, cc: param(label, 'Level in dB, -100 (off) to +12, exponential knob with fine steps near the top. 0 dB = unity (VERIFY: -6 dB measures -6.00 dB).', num(-100, 12), 'dB', 0, cc)
 XFADE = lambda cc: param('XFADE', 'Crossfade at the loop point, 0 to 1.', num(0, 1), '%', 0, cc)
 DISC = {
-    'speed': param('SPEED', 'Varispeed in semitones (pitch and tempo move together; verified to 0.1 cent, VERIFY). With TEMPO "stretch" this field is the stretch PITCH instead. In SYNC the S-4 offers no scale and moves in octaves, but a scale stored here still sets the knob\'s steps (VERIFY5).',
+    'speed': param('SPEED', 'Varispeed in semitones (pitch and tempo move together; verified to 0.1 cent, VERIFY). With TEMPO "stretch" this field is the stretch PITCH instead. In SYNC the S-4 offers no scale and moves in octaves, but a scale stored here still sets the knob\'s steps (VERIFY5). CC 46 covers -36 to +36 linearly; OCTAVES and the scales take the nearest step, STRETCH whole semitones (CAL4).',
                    num(-36, 36), 'st', 0, 46,
                    [mode('octaves', 'OCTAVES', 'whole octaves (the S-4\'s own SYNC saves always use it)', {'enum': in_scale('octaves')})] +
                    [mode(n, n.upper(), 'semitones on this scale\'s notes', {'enum': in_scale(n)}) for n in SCALE_NAMES if n != 'octaves'] +
                    [mode('free', 'FREE', 'continuous semitones, -36 to +36 (offered with TEMPO "free")', num(-36, 36))], 'octaves'),
-    'tempo': param('TEMPO', 'value = the sample\'s own tempo in BPM (what SYNC and STRETCH scale from); 20 to 220 seen. mode = the tempo mode.', num(0), 'BPM', 120, 47,
+    'tempo': param('TEMPO', 'value = the sample\'s own tempo in BPM (what SYNC and STRETCH scale from). mode = the tempo mode. CC 47 covers 20 to 999 BPM linearly, in whole BPM in SYNC (CAL4).', num(0), 'BPM', 120, 47,
                    [mode('sync', 'SYNC', 'varispeed to the project tempo: rate = project / sample tempo (pitch follows)'),
                     mode('stretch', 'STRETCH', 'the S-4 time-stretches to the project tempo (granular, grains ~24 ms at 83.6 Hz); SPEED holds the PITCH'),
                     mode('free', 'AS RECORDED', 'plays at its own speed; START and LENGTH are in seconds')], 'sync'),
-    'start': param('START', 'Start of the loop region: beats from the sample start (mode = the grid it snaps to), or seconds when mode is "free" (TEMPO "free").', num(0), 'beats', 0, 48,
+    'start': param('START', 'Start of the loop region: beats from the sample start (mode = the grid it snaps to), or seconds when mode is "free" (TEMPO "free"). CC 48 steps evenly through the grid steps in the sample (0 to the last one), or 0 to the sample\'s seconds in FREE (CAL4).', num(0), 'beats', 0, 48,
                    [mode(g, g, f'grid {g}; value in beats') for g in GRIDS] + [mode('free', 'FREE', 'seconds', num(0), 's')], '1/1'),
-    'length': param('LENGTH', 'Length of the loop region: beats (mode = grid), or seconds when mode is "free". With LOOP off and a LENGTH longer than the sample, the sample plays once and then silence.', num(0), 'beats', 4, 49,
+    'length': param('LENGTH', 'Length of the loop region: beats (mode = grid), or seconds when mode is "free". With LOOP off and a LENGTH longer than the sample, the sample plays once and then silence. CC 49 steps evenly from one grid step to the whole sample, or 0 to the sample\'s seconds in FREE (CAL4).', num(0), 'beats', 4, 49,
                     [mode(g, g, f'grid {g}; value in beats') for g in GRIDS] + [mode('free', 'FREE', 'seconds', num(0), 's')], '1/1'),
     'zoom': param('ZOOM', 'Waveform zoom on the S-4\'s screen (display only); only 0 seen.', num(0), '', 0, None),
     'offset': param('OFFSET', 'Playback offset in seconds (verified: +0.6 moves the content 0.600 s, VERIFY). MIDI reaches -8 to +8 s (126 ms per CC step); larger values set on the S-4 are stored too (10.88 seen).', num(), 's', 0, 52),
@@ -264,12 +264,12 @@ DISC = {
     'scene_index': num(0, 127, True, description='Scene (0-127) that owns the sample file: discs/scene<scene_index+1>_track<track_index+1>.wav (verified up to scene 128, VERIFY2).'),
 }
 TAPE = {
-    'speed': param('SPEED', 'Varispeed in semitones.', num(-36, 36), 'st', 0, 46,
+    'speed': param('SPEED', 'Varispeed in semitones. CC 46 covers -36 to +36 linearly; OCTAVES and the scales take the nearest step (CAL4).', num(-36, 36), 'st', 0, 46,
                    [mode('', 'OCTAVES', 'whole octaves (the default; verified -12 = 220.00 Hz from 440, VERIFY)', {'enum': in_scale('octaves')})] +
                    [mode(n, n.upper(), 'semitones on this scale\'s notes', {'enum': in_scale(n)}) for n in SCALE_NAMES if n != 'octaves'] +
                    [mode('free', 'FREE', 'continuous semitones', num(-36, 36))]),
     'rotate': bi('ROTATE', 48, 'Rotate the tape loop, -1 to +1.'),
-    'length': param('LENGTH', 'Tape length in beats at the project tempo, counted in tape time (VERIFY: a 100 BPM tape at 120 needs 9.6 beats), on the grid in mode; seconds in "free" (8.749521 s matched a recorded tape of 8.7495 s).', num(0), 'beats', None, 49,
+    'length': param('LENGTH', 'Tape length in beats at the project tempo, counted in tape time (VERIFY: a 100 BPM tape at 120 needs 9.6 beats), on the grid in mode; seconds in "free" (8.749521 s matched a recorded tape of 8.7495 s). On the 1/1 grid at 120 BPM, CC 49 steps evenly through 1 to 15 bars, the 30 s a TAPE holds (CAL4).', num(0), 'beats', None, 49,
                     [mode(g, g, f'grid {g}; value in beats') for g in GRIDS] + [mode('free', 'FREE', 'seconds', num(0), 's')]),
     'level': LEVEL('LEVEL', 50),
     'sos': bi('SOS', 51, 'Sound-on-sound, -1 to +1.'),
@@ -282,10 +282,10 @@ TAPE = {
     'scene_index': num(0, 127, True, description='Scene (0-127) that owns the tape file: tapes/scene<scene_index+1>_track<track_index+1>_tape.wav.'),
 }
 POLY = {
-    'pitch': param('PITCH', 'Pitch in semitones. MIDI note 60 plays the sample at its own pitch (VERIFY).', num(), 'st', 0, 46,
-                   [mode('', 'CHROMATIC', 'whole semitones (verified +3 = +300.1 cents)', num(integer=True)), mode('free', 'FREE', 'continuous semitones, -12 to +12, linear (verified +2.5 = +250.0 cents)', num(-12, 12))]),
-    'start': param('START', 'Start as a fraction of the sample, 0 to 1.', num(0, 1), '%', 0, 48),
-    'length': param('LENGTH', 'Length as a fraction of the sample, 0 to 1 (1 = to the end).', num(0, 1), '%', 1, 49),
+    'pitch': param('PITCH', 'Pitch in semitones. MIDI note 60 plays the sample at its own pitch (VERIFY). CC 46 covers -12 to +12 linearly in both modes (CAL4).', num(), 'st', 0, 46,
+                   [mode('', 'CHROMATIC', 'whole semitones (verified +3 = +300.1 cents); set over MIDI, the S-4 stores the value unrounded (CAL4)', num()), mode('free', 'FREE', 'continuous semitones, -12 to +12, linear (verified +2.5 = +250.0 cents)', num(-12, 12))]),
+    'start': param('START', 'Start as a fraction of the sample, 0 to 1, linear on CC 48 (CAL4).', num(0, 1), '%', 0, 48),
+    'length': param('LENGTH', 'Length as a fraction of the sample, 0 to 1 (1 = to the end), linear on CC 49 (CAL4).', num(0, 1), '%', 1, 49),
     'level': LEVEL('LEVEL', 50),
     'loop': param('LOOP', 'Loop point as a fraction, 0 to 1.', num(0, 1), '%', 0, 52),
     'loop_mode': {'type': 'object', 'description': 'LOOP MODE: 0 = off, 1 = loop, 2 = ping-pong.', 'x-label': 'LOOP MODE', 'default': {'value': 0},
@@ -341,12 +341,12 @@ def slot(slot_name):
 
 MIX_PARAMS = {}
 for n in range(1, 5):
-    MIX_PARAMS[f'level{n}'] = param(f'T{n} LEVEL', f"Track {n} mixer level in dB, -100 (off) to +6. Post-fader on the master and on the track's own USB return (VERIFY2).", num(-100, 6), 'dB', 0)
-    MIX_PARAMS[f'pan{n}'] = param(f'T{n} PAN', f'Track {n} pan, -1 (left) to +1 (right). Pan law (VERIFY3/4): exactly 0 = unity on both sides; otherwise L = 2 cos t, R = 2 sin t with t = (pan + 1) pi / 4.', num(-1, 1), '±', 0)
-    MIX_PARAMS[f'cutoff{n}'] = param(f'T{n} FLTR', f'Track {n} filter, -1 to +1 (0 = open).', num(-1, 1), '±', 0)
+    MIX_PARAMS[f'level{n}'] = param(f'T{n} LEVEL', f"Track {n} mixer level in dB, -100 (off) to +6, exponential knob with fine steps near the top (CC {45 + n} on channel 16: 64 = -13.04 dB, 100 = +1.04 dB; CAL4). Post-fader on the master and on the track's own USB return (VERIFY2).", num(-100, 6), 'dB', 0)
+    MIX_PARAMS[f'pan{n}'] = param(f'T{n} PAN', f'Track {n} pan, -1 (left) to +1 (right), linear on CC {53 + n}, channel 16 (CAL4). Pan law (VERIFY3/4): exactly 0 = unity on both sides; otherwise L = 2 cos t, R = 2 sin t with t = (pan + 1) pi / 4.', num(-1, 1), '±', 0)
+    MIX_PARAMS[f'cutoff{n}'] = param(f'T{n} FLTR', f'Track {n} filter, -1 to +1 (0 = open), linear on CC {49 + n}, channel 16 (CAL4).', num(-1, 1), '±', 0)
     MIX_PARAMS[f'mute{n}'] = {'type': 'object', 'description': f'Track {n} mute: 0 = playing, 1 = muted.', 'x-label': f'T{n} MUTE', 'default': {'value': 0},
                               'properties': {'value': {'enum': [0, 1]}}, 'required': ['value'], 'additionalProperties': False}
-MIX_PARAMS['compress_amount'] = param('COMPRESSOR', 'Master compressor amount, 0 to 1.', num(0, 1), '%', 0)
+MIX_PARAMS['compress_amount'] = param('COMPRESSOR', 'Master compressor amount, 0 to 1, linear on CC 58, channel 16 (CAL4).', num(0, 1), '%', 0)
 
 QUANT = param('QUANTIZE', 'When a launched scene starts (saved on the S-4, 2026-10-20). The S-4\'s default is "" with 5 (1/1).', num(), '', 5, None,
               [mode('', 'STRAIGHT', f'value = {DIVS_TXT}', num(0, 11, True)), mode('triplet', 'TRIPLET', 'the same steps as triplets', num(0, 11, True)),
@@ -398,7 +398,7 @@ DEFS = {
 
 settings = obj("The project's settings pages.", {
     'audio_settings': obj('AUDIO settings.', {
-        'input_source': {'enum': [0, 1, 2, 3], 'description': 'INPUT: 0 = IN1/IN2, 1 = MIC, 2 = IN1/MIC, 3 = HEADSET (menu order).', 'default': 0},
+        'input_source': {'enum': [0, 1, 2, 3], 'description': 'INPUT: 0 = IN1/IN2, 1 = MIC, 2 = IN1/MIC, 3 = HEADSET (as named on the screen).', 'default': 0},
         'mic_gain': num(0, 100, True, description='MIC GAIN, 0 to 100.', default=50),
         **{f'track{n}_input': {'enum': [0, 1, 2, 3], 'description': f'TRACK {n} INPUT: 0 = STEREO, 1 = IN1, 2 = IN2, 3 = SENDS ONLY.', 'default': 0} for n in range(1, 5)},
         'monitor_on_record': {'type': 'boolean', 'description': 'MONITOR ON RECORD.', 'default': True},
@@ -427,7 +427,7 @@ def mix_targets(routes):
     return obj('Mixer targets.', {'mix': obj('Mixer targets: ' + ', '.join(MIX_TARGETS) + '.', {k: REF(routes) for k in MIX_TARGETS})})
 
 
-MACRO_DESC = "Macro {k}'s value, -1 to +1. Its polarity on the screen follows its routings' modes; this field's mode is a leftover (\"\" or \"unipolar\") that does not decide it."
+MACRO_DESC = "Macro {k}'s value, -1 to +1, linear on its CC (45 + {k}, channel 15; CAL4). Its polarity on the screen follows its routings' modes; this field's mode is a leftover (\"\" or \"unipolar\") that does not decide it."
 global_slots = obj('Project-wide state (not per scene).', {
     'mixer': obj('The MIX view: one mixer for all scenes.', {
         'mix': {'type': 'object', 'description': 'Mixer values. Empty: all at their defaults (0 dB, centre, open, unmuted, no compression).',
@@ -446,7 +446,7 @@ global_slots = obj('Project-wide state (not per scene).', {
     'scene': {'type': 'object', 'description': "How scenes follow each other (Scene view settings). Empty: the S-4's defaults (NEXT, 100 %, QUANTIZE 1/1).",
               'properties': {'scene': obj('RULE, CHANCE and QUANTIZE.', {
                   'chance': param('CHANCE', 'Chance that a chained scene moves on, 0 to 1 (0.598 = 60 %).', num(0, 1), '%', 1),
-                  'rule': param('RULE', 'Where a chain moves next: 0 = NEXT, 1 = PREV, 2 = WALK, 3 = RANDOM, 4 = SAME (menu order).', {'enum': [0, 1, 2, 3, 4]}, '', 0),
+                  'rule': param('RULE', 'Where a chain moves next: 0 = NEXT, 1 = PREV, 2 = WALK, 3 = RANDOM, 4 = SAME (as named on the screen).', {'enum': [0, 1, 2, 3, 4]}, '', 0),
                   'quantize': QUANT})}, 'additionalProperties': False},
     **{f'modulator{n}': REF('modulator', f'Perform modulator {n} (routed onto the macros; default types RANDOM, RANDOM, WAVE, WAVE).') for n in range(1, 5)},
     'track_mappings': {'type': 'array', 'description': "Macro routings onto each track's parameters (T1-T4), the same in every scene.",

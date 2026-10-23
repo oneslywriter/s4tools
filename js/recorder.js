@@ -5,7 +5,7 @@
 //   Threshold: armed, the first sound above the threshold starts a take, either on the PC (with pre-roll, so
 //     nothing is cut) or with the S-4's own REC on a track or the main out. An S-4 take misses the first ~45 ms
 //     of the sound: its way to the PC, Chrome's 10 ms blocks, the REC note and the S-4's start (VERIFY.md).
-//   Count-in: 1 or 2 bars at the project's BPM (the Build project), heard on this computer, on the S-4 (its
+//   Pre-click: 1 or 2 bars at the project's BPM (the Build project), heard on this computer, on the S-4 (its
 //     main-out USB pair: no setup there) or only seen. On the downbeat the S-4 gets START (and the REC), sent
 //     timestamped, and the take begins; it ends by hand or after a set number of bars, exactly on the bar.
 //     Measured with a click at the start of bar 1 (2026-10-22): with the click on the S-4, its bar 1 lands
@@ -35,7 +35,7 @@
 
   let stream = null, sr = 48000, take = null; // take = { target, auto, count, date, quiet, blocks }
   let ring = []; // the last PRE seconds of blocks, for a threshold PC take
-  let count = null; // a count-in under way: { t0, beat, n, down, timers, click }
+  let count = null; // a pre-click under way: { t0, beat, n, down, timers, click }
   const peak = [0, 0]; // highest sample since the meter last drew
 
   // ---------- devices ----------
@@ -191,9 +191,9 @@
     S4.toast(`${name} saved (${(n / sr).toFixed(1)} s)`);
   }
 
-  // ---------- count-in ----------
+  // ---------- pre-click ----------
   // The click: on this computer (an output picked here), on the S-4 (the USB pair of its main out, as Play on S-4
-  // numbers them), or none. Each count-in opens its own audio connection (one kept open between count-ins landed
+  // numbers them), or none. Each pre-click opens its own audio connection (one kept open between pre-clicks landed
   // the S-4's bar 1 about 20 ms later on average, measured 2026-10-22). The stream to the S-4 starts and ends with
   // silence, so the S-4 doesn't keep replaying a piece of click (it loops the last 1024 samples it got).
   async function clickOut() {
@@ -202,12 +202,12 @@
     let sinkId = R.settings.localOut || '';
     if (mode === 's4') {
       const out = (await devices('audiooutput')).find(isS4);
-      if (!out) { S4.toast('The S-4\'s audio output isn\'t there, so the count-in is silent', 'err'); return null; }
+      if (!out) { S4.toast('The S-4\'s audio output isn\'t there, so the pre-click is silent', 'err'); return null; }
       sinkId = out.deviceId;
     }
     const ctx = new AudioContext(sinkId ? { sampleRate: 48000, sinkId, latencyHint: 'interactive' } : { sampleRate: 48000, latencyHint: 'interactive' });
     await Promise.race([ctx.resume(), new Promise(r => setTimeout(r, 1000))]);
-    if (ctx.state !== 'running') { ctx.close(); S4.toast('This computer\'s audio didn\'t start, so the count-in is silent', 'err'); return null; }
+    if (ctx.state !== 'running') { ctx.close(); S4.toast('This computer\'s audio didn\'t start, so the pre-click is silent', 'err'); return null; }
     const dest = ctx.createGain(); // muted to cancel the clicks still to come
     if (mode === 's4') {
       const n = ctx.destination.maxChannelCount;
@@ -252,7 +252,7 @@
     if (take || R.armed) return;
     const target = R.settings.target, midi = S4.midi.connected();
     if (target !== 'pc' && !midi) return S4.toast('There is no MIDI connection to the S-4, so it can\'t be told to record', 'err');
-    if (midi && S4.state.playing) return S4.toast('Stop the S-4 first: the count-in starts it on the first beat', 'err');
+    if (midi && S4.state.playing) return S4.toast('Stop the S-4 first: the pre-click starts it on the first beat', 'err');
     if (!(await R.start())) return;
     const c = await clickOut();
     const beat = 60000 / R.bpm(), n = R.settings.bars * 4;
@@ -321,12 +321,12 @@
 
   const clickText = () => {
     const s = R.settings;
-    return s.click === 'visual' ? 'silent' : s.click === 's4' ? 'click on the S-4' : 'click here';
+    return s.click === 'visual' ? 'no click' : s.click === 's4' ? 'click on the S-4' : 'click here';
   };
   const setStatus = () => { els.status.textContent = els.status.title = statusText(); };
   function statusText() {
     const s = R.settings, tg = s.target;
-    if (count) return `Counting in: ${countLeft()} · ${R.bpm()} bpm`;
+    if (count) return `Pre-click: ${countLeft()} · ${R.bpm()} bpm`;
     if (take) {
       const sec = ((Date.now() - take.date) / 1000).toFixed(1) + ' s';
       return take.target === 'pc' ? `Recording the main out here · ${sec}` : `The S-4 is recording ${targetLabel(take.target)} · ${sec}`;
@@ -358,21 +358,20 @@
       });
     } }, S4.icon('chev'));
     const thr = S4.knob({
-      label: 'Starts at', ccLabel: 'A take starts when the sound goes above this level', get: () => s.thresh, set: v => set('thresh', v),
+      label: 'Threshold', ccLabel: 'A take starts when the sound goes above this level', get: () => s.thresh, set: v => set('thresh', v),
       min: -60, max: 0, step: 1, def: -30, fmt: v => v + ' dB', parse: t => { const v = parseFloat(t); return isFinite(v) ? S4.clamp(Math.round(-Math.abs(v)), -60, 0) : null; },
     }, { size: 'inline' });
-    const countBtn = h('button', { class: 'btn rec-count', title: 'How long the count-in is, and where its click plays', onclick: async () => {
+    const countBtn = h('button', { class: 'btn rec-count', title: 'How long the pre-click is, and where its click plays', onclick: async () => {
       let outs = [];
       try { outs = await devices('audiooutput'); } catch (e) { /* listed without names */ }
       S4.menu(countBtn, [
-        { head: `Count-in at ${R.bpm()} bpm (the Build project's tempo)` },
+        { head: `Pre-click at ${R.bpm()} bpm (the Build project's tempo)` },
         ...[1, 2].map(b => ({ label: b === 1 ? '1 bar' : '2 bars', checked: s.bars === b, action: () => set('bars', b) })),
-        { head: 'Click here, on this computer' },
-        { label: 'The default output', checked: s.click === 'local' && !s.localOut, action: () => { s.localOut = ''; set('click', 'local'); } },
-        ...outs.filter(d => !isS4(d)).map(d => ({ label: d.label || 'Output without a name', checked: s.click === 'local' && s.localOut === d.deviceId, action: () => { s.localOut = d.deviceId; set('click', 'local'); } })),
-        { sep: true },
-        { label: 'Click on the S-4', hint: 'out of its main out', checked: s.click === 's4', action: () => set('click', 's4') },
-        { label: 'No click: the countdown only', checked: s.click === 'visual', action: () => set('click', 'visual') },
+        { head: 'Click' },
+        { label: 'Here: the default output', checked: s.click === 'local' && !s.localOut, action: () => { s.localOut = ''; set('click', 'local'); } },
+        ...outs.filter(d => !isS4(d)).map(d => ({ label: 'Here: ' + (d.label || 'an output without a name'), checked: s.click === 'local' && s.localOut === d.deviceId, action: () => { s.localOut = d.deviceId; set('click', 'local'); } })),
+        { label: 'On the S-4', hint: 'out of its main out', checked: s.click === 's4', action: () => set('click', 's4') },
+        { label: 'None: the countdown only', checked: s.click === 'visual', action: () => set('click', 'visual') },
       ]);
     } });
     const hold = S4.knob({
@@ -402,7 +401,7 @@
     function render() {
       const tg = s.target, cnt = s.mode === 'count', pcTake = take && take.target === 'pc' && !take.auto && !take.count;
       const busy = !!(take || R.armed || count);
-      modeSeg.replaceChildren(...[['thresh', 'On sound'], ['count', 'Count-in']].map(([v, label]) => h('button', {
+      modeSeg.replaceChildren(...[['thresh', 'Threshold'], ['count', 'Pre-click']].map(([v, label]) => h('button', {
         class: s.mode === v ? 'on' : '', disabled: busy || null, onclick: () => set('mode', v),
       }, label)));
       thrMark.style.display = cnt ? 'none' : '';
@@ -423,9 +422,9 @@
       go.classList.toggle('recording', !!ownTake);
       go.disabled = !!(take && !ownTake);
       if (cnt) {
-        go.replaceChildren(ownTake ? 'Stop take' : count ? String(countLeft()) : 'Count in');
-        go.title = ownTake ? 'Stop the take' : count ? 'Cancel the count-in'
-          : `Count ${s.bars} bar${s.bars > 1 ? 's' : ''} in at ${R.bpm()} bpm; on the first beat the S-4 starts${tg === 'pc' ? ' and its main out is recorded here' : ' and REC goes to ' + targetLabel(tg)}. Stop the S-4 before you start.`;
+        go.replaceChildren(ownTake ? 'Stop take' : count ? String(countLeft()) : 'Pre-click');
+        go.title = ownTake ? 'Stop the take' : count ? 'Cancel the pre-click'
+          : `A pre-click of ${s.bars} bar${s.bars > 1 ? 's' : ''} at ${R.bpm()} bpm; on the first beat the S-4 starts${tg === 'pc' ? ' and its main out is recorded here' : ' and REC goes to ' + targetLabel(tg)}. Stop the S-4 before you start.`;
       } else {
         go.replaceChildren(ownTake ? 'Stop take' : R.armed ? 'Armed' : 'Arm');
         go.title = ownTake ? 'Stop the take' : R.armed ? 'Stop waiting' : tg === 'pc'

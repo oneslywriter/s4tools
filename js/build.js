@@ -223,9 +223,9 @@
     });
   }
   // ---------- project settings: the S-4 project's own settings, exported with it ----------
-  // Stored values (measured): INPUT 0-3 in menu order; track inputs STEREO / IN1 / IN2 / SENDS ONLY = 0-3;
+  // Stored values (measured): INPUT 0-3 as named on the screen; track inputs STEREO / IN1 / IN2 / SENDS ONLY = 0-3;
   // RUNNING settings ALWAYS = 0, WHEN PLAYING = 1; POST RECORD PLAY = 0, OVERDUB = 1; METER quantisation is a
-  // step of S4.params.METER (0 NONE ... 7 4 BAR, read on the S-4); RULE 0-4 in menu order; CHANCE 0-1.
+  // step of S4.params.METER (0 NONE ... 7 4 BAR, read on the S-4); RULE 0-4 as named on the screen; CHANCE 0-1.
   // Scene QUANTIZE (saved on the S-4, 2026-10-20): '' STRAIGHT / 'triplet' / 'dotted' with a step of
   // S4.params.DIVS (6 = 1/2 read on the S-4); 'free' in Hz, 0.020 .. 50; 'sample end' with the track counted from 0;
   // 'off' (value 0).
@@ -1655,6 +1655,7 @@
     try {
       const r = await S4.s4p.build(CR.proj);
       S4.download(S4.zip.write(r.files), r.name + '.s4project.zip');
+      S4.follow.fresh();
       const n = r.files.filter(f => /\.wav$/.test(f.name)).length;
       report('Ready for the S-4', [
         `${r.name}.s4project · ${Object.keys(JSON.parse(r.files[0].data).data.scenes).length} scenes · ${n} audio file${n === 1 ? '' : 's'}`,
@@ -1676,6 +1677,7 @@
       const r = await S4.s4p.build(CR.proj);
       const name = await S4.drive.write(r, dir);
       if (!name) return S4.toast('Cancelled, nothing was written');
+      S4.follow.fresh();
       const n = r.files.filter(f => /\.wav$/.test(f.name)).length;
       report('On the S-4', [
         `${dir.name}/${name}.s4project · ${Object.keys(JSON.parse(r.files[0].data).data.scenes).length} scenes · ${n} audio file${n === 1 ? '' : 's'}`,
@@ -1920,11 +1922,12 @@
       CR.sel.scene = !isEmpty(r.proj.scenes[r.selected]) ? r.selected : Math.max(0, r.proj.scenes.findIndex(sc => !isEmpty(sc)));
       saveProj();
       renderAll();
+      S4.follow.fresh(); // the next scene launched from Live takes this project's mixer and macros
       const used = r.proj.scenes.filter(sc => !isEmpty(sc)).length;
       if (!opts.quiet) {
         report('S-4 project opened', [
           `${pick.name} · ${r.proj.bpm} BPM · ${used} scene${used === 1 ? '' : 's'}`,
-          'Anything Build doesn\'t show (MIDI and audio settings, routings and more) is kept, and written back as it was when you export.',
+          'Some of the project isn\'t shown in Build (its MIDI and audio settings, routings and more). Those parts stay in the project, and Export puts them back on the S-4 exactly as they were.',
         ], r.warnings, r.missing);
       }
       return r;

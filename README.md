@@ -3,7 +3,7 @@
 Browser tools for the Torso S-4. Open the page in Chrome or Edge, plug the S-4 in over USB, and:
 
 - **Live**: play the S-4 from your computer. Four lanes for the four tracks, a tile per device, knobs in an inspector. Teach it any MIDI controller with a right-click (**Learn**), and keep a control map per controller.
-- **Record** the S-4's main out to WAV files, or let sound or a count-in start the take, on the computer or on the S-4.
+- **Record** the S-4's main out to WAV files, or start a take on a threshold or after a pre-click, on the computer or on the S-4.
 - **Build**: make S-4 projects from your own samples. A Library to browse folders, 128 scene pads, lanes with tempo and key handling, effects, sends and modulators in the S-4's own units. Preview it in the browser or play it through the S-4 itself, then write the project straight onto the S-4's drive. Projects from the S-4 open back up for editing.
 
 Six colour themes, or System to follow your computer: Paper and Night, Mono and Chalk in shades of grey, Slate and Meadow.

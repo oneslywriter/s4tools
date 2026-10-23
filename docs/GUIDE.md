@@ -69,7 +69,7 @@ Live shows the S-4's four tracks as four coloured lanes.
 - Its name is a menu. Set it to the device your S-4 really has in that slot, since MIDI can't tell s4tools, or change it on the S-4. For MODS, the menu sets each modulator's type (WAVE, RANDOM, FOLLOW, ADSR).
 - The three buttons switch the device off, put its knobs back to their defaults, and roll random values. Switching off turns its WET (or LEVEL) down to zero and remembers where it was, because MIDI has no bypass.
 
-**What the knobs show.** The S-4 never reports its knobs, so Live shows what s4tools last sent. When you pick a scene, **Follow the project** (on by default) moves the knobs to that scene's values in the Build project, so open your S-4's project in Build first. **Settings › Resend** goes the other way and sends every value to the S-4.
+**What the knobs show.** The S-4 never reports its knobs, so Live shows what s4tools last sent. When you pick a scene, **Follow the project** (on by default) moves the knobs to that scene's values in the Build project, so open your S-4's project in Build first. The mixer and the macros belong to the whole project, not to a scene, so Live takes them once: on the first scene you pick after exporting or opening a project. After that they stay as you set them, as they do on the S-4. **Settings › Resend** goes the other way and sends every value to the S-4.
 
 ### Knobs
 
@@ -121,12 +121,12 @@ Click the meter to start listening (the browser asks for the microphone the firs
 
 Press **Record to PC**, then **Stop**. The take downloads as a 24-bit, 48 kHz WAV with the date and time in its name.
 
-### On sound
+### Threshold
 
 The take starts by itself when something plays.
 
-1. Choose **On sound**.
-2. Set **Starts at** a little above the noise floor. The line on the meter shows it.
+1. Choose **Threshold**.
+2. Set the **Threshold** knob a little above the noise floor. The line on the meter shows it.
 3. Choose where it goes (the **→** button): **PC** for a WAV here, **T1–T4** for the S-4 to record that track, or **MAIN** for the S-4's main recording.
 4. Set **Stops after**: seconds of quiet, or 0 to stop it yourself.
 5. Press **Arm** and play.
@@ -140,14 +140,14 @@ A take on the S-4 needs a few things:
 - The sound must reach the main out, so turn the track's monitor on (the bar shows a **MON** button for it).
 - The sound travels to the computer and the record command travels back, so **the S-4 misses about the first 45 ms**. For drums, record to the PC.
 
-### Count-in
+### Pre-click
 
-The take starts after one or two bars of count-in, in time with the S-4.
+The take starts after a pre-click of one or two bars, in time with the S-4.
 
-1. Choose **Count-in**.
-2. In its menu, pick **1 or 2 bars** and where the click plays: **here** (any output on this computer; choose speakers or headphones, not the S-4), **on the S-4** (out of its main out; nothing to set up there), or **no click** (the button counts down).
+1. Choose **Pre-click**.
+2. In its menu, pick **1 or 2 bars** and where the **click** plays: **here** (any output on this computer; choose speakers or headphones, not the S-4), **on the S-4** (out of its main out; nothing to set up there), or **no click** (the button counts down).
 3. Choose where the take goes, and its **Length** in bars (0: until you stop it).
-4. Stop the S-4 and press **Count in**.
+4. Stop the S-4 and press **Pre-click**.
 
 The tempo is the Build project's. On the first beat the S-4 starts (and records, for an S-4 take). Both commands are sent ahead of time so they land on the beat, and a take with a length ends on the bar (a take on the PC runs a moment longer, so the bar's end is all there). With the click on the S-4, its bar 1 lands within a few milliseconds of the click's beat.
 
@@ -261,7 +261,7 @@ Samples are written as 48 kHz, 24-bit WAV. TAPE and POLY tracks share the S-4's 
 
 ### Off the S-4
 
-**Project › Open a project from the S-4…** lists the projects on the drive and brings in the one you choose, samples included. Anything Build doesn't show is kept and written back untouched, so a project survives the trip unchanged.
+**Project › Open a project from the S-4…** lists the projects on the drive and brings in the one you choose, samples included. Some of a project isn't shown in Build (its MIDI and audio settings, routings and more). Those parts stay in the project, and Export puts them back exactly as they were.
 
 ### Files
 
@@ -306,7 +306,7 @@ The sliders button at the top right.
 
 **The meter stays flat.** Allow the microphone for the page, and check the input (the arrow by the meter). A track that only listens to its input needs its monitor on to reach the main out.
 
-**No count-in click.** The default output may be the S-4 itself. Choose your speakers or headphones in the count-in menu, or the click on the S-4.
+**No click in the pre-click.** The default output may be the S-4 itself. Choose your speakers or headphones in the pre-click menu, or the click on the S-4.
 
 **Play on S-4 is silent.** The tracks' MATERIAL must be in BYPASS and the output must be the S-4. Use the beeps to check each track.
 
@@ -319,7 +319,7 @@ The sliders button at the top right.
 ## 11. What it can't do
 
 - **Read the S-4's knobs.** MIDI only goes one way for knobs, so Live shows what was sent, or the Build project's values with Follow the project on.
-- **Follow every value yet.** Until their MIDI curves are measured, these stay put when you pick a scene: the mixer's levels, pans and filters, COMPRESS and MAIN, the macros, SPEED / START / LENGTH on DISC, TAPE and POLY, and DISC TEMPO and TAPE LEVEL.
+- **Follow MAIN.** An S-4 project doesn't store it, so it stays where Live last set it.
 - **Change devices, modulator types or routings over MIDI**, or truly bypass a device. Build writes all of these into the project file instead.
 - **Record a single track.** Chrome passes on only the main pair of the S-4's USB channels.
 - **Catch the very start on the S-4.** A take on the S-4 started by sound begins about 45 ms late; record to the PC to keep everything.
