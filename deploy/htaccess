@@ -10,7 +10,7 @@
 # the app has no build step or versioned file names: browsers check for a newer copy of these on each visit
 # (and get "not modified" when nothing changed), so a deploy shows up straight away
 <IfModule mod_headers.c>
-  <FilesMatch "\.(html|js|css|md)$">
+  <FilesMatch "\.(html|js|css|md|json)$">
     Header set Cache-Control "no-cache"
   </FilesMatch>
 </IfModule>

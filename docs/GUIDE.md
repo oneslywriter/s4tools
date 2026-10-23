@@ -45,6 +45,8 @@ Open s4tools and allow MIDI. At the top right, **Connected** with a green dot me
 
 **Your work stays in this browser.** Build projects, samples and control maps are kept for this web address in this browser. Clearing the site's data removes them, and they don't follow you to another computer. **Project › Back up for s4tools…** saves a copy you can keep.
 
+**New versions.** When s4tools is updated while the page is open, a green bar under the header says so. Reload with **Ctrl+Shift+R** (**Cmd+Shift+R** on a Mac) when it suits you: your work in Build is kept. **Later** hides the bar for half an hour.
+
 ---
 
 ## 2. Playing the S-4 live

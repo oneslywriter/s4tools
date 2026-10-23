@@ -1187,6 +1187,43 @@
     ok(/Nothing to export yet/.test($('#toast').textContent), 'nothing to export', $('#toast').textContent);
   });
 
+  await section('update notice', async () => {
+    const U = S4.update, bar = $('#updateBar'), realFetch = window.fetch, was = { mine: U.mine, latest: U.latest, later: U.later };
+    let served = null; // the version.json the "site" has (null: none)
+    window.fetch = (url, o) => (/version\.json$/.test(String(url))
+      ? Promise.resolve(served ? new Response(JSON.stringify({ version: served })) : new Response('', { status: 404 })) : realFetch(url, o));
+    try {
+      U.mine = 'dev'; served = 'b';
+      await U.check();
+      ok(bar.hidden, 'a copy without a version never shows the notice');
+      U.mine = 'a'; served = 'a';
+      await U.check();
+      ok(bar.hidden, 'the same version on the site: no notice');
+      served = 'b';
+      await U.check();
+      ok(!bar.hidden && /Ctrl\+Shift\+R/.test(bar.textContent), 'a newer version on the site: the notice asks for Ctrl+Shift+R', bar.textContent);
+      for (const th of S4.theme.LIST.map(x => x.id).filter(id => id !== 'system')) {
+        S4.theme.set(th);
+        ok(audit(3).length === 0, `${th}: the notice is readable`, audit(3).slice(0, 5));
+      }
+      S4.theme.set('system');
+      bar.querySelector('.btn').click();
+      ok(bar.hidden, 'Later hides it');
+      await U.check();
+      ok(bar.hidden, 'and it stays hidden for a while');
+      U.later = 0;
+      await U.check();
+      ok(!bar.hidden, 'then it comes back while the page is still old');
+      served = null;
+      await U.check();
+      ok(!bar.hidden, 'a failed check changes nothing');
+    } finally {
+      window.fetch = realFetch;
+      Object.assign(U, was);
+      bar.hidden = true;
+    }
+  });
+
   await section('errors', async () => {
     ok(T.errors.length === 0, 'no console errors', T.errors.slice(0, 10));
   });

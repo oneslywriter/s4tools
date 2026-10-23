@@ -43,6 +43,11 @@ jobs:
           cp -r index.html css js LICENSE site/
           cp docs/guide.html docs/GUIDE.md site/docs/
           cp deploy/htaccess site/.htaccess
+          # the version: in index.html (what a page is) and version.json (what the site has now; uploaded last)
+          v="${GITHUB_SHA::12}"
+          sed -i "s|<meta name=\"s4tools-version\" content=\"dev\">|<meta name=\"s4tools-version\" content=\"$v\">|" site/index.html
+          grep -q "content=\"$v\"" site/index.html
+          printf '{"version": "%s"}\n' "$v" > site/version.json
           find site -type f | sort
 
       - name: Install lftp
@@ -77,12 +82,14 @@ jobs:
 
       - name: Upload over FTPS
         if: env.FTP_HOST != '' && env.FTP_USER != '' && env.LFTP_PASSWORD != ''
-        # the host's own files in the folder (.well-known for the SSL certificate, cgi-bin, .ftpquota) are left alone
+        # the host's own files in the folder (.well-known for the SSL certificate, cgi-bin, .ftpquota) are left alone.
+        # version.json goes up after everything else, so an open page only hears of the new version once it's all there.
         run: |
           if ! lftp -c "$LFTP_TLS; open --env-password -u \"$FTP_USER\" \"$FTP_HOST\"; \
             mirror --reverse --delete --verbose --parallel=4 \
-              --exclude-glob .well-known/ --exclude-glob cgi-bin/ --exclude-glob .ftpquota \
-              site/ \"$FTP_DIR\"" 2> lftp.err; then
+              --exclude-glob .well-known/ --exclude-glob cgi-bin/ --exclude-glob .ftpquota --exclude-glob version.json \
+              site/ \"$FTP_DIR\" && \
+            put -O \"$FTP_DIR\" site/version.json" 2> lftp.err; then
             cat lftp.err
             echo "::error::The upload failed: $(grep -v '^[[:space:]]*$' lftp.err | tail -2 | tr '\n' ' ')"
             exit 1

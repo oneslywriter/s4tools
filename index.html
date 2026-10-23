@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>s4tools</title>
+  <meta name="s4tools-version" content="dev">
   <meta name="description" content="s4tools: play the Torso S-4 from your computer, teach it your MIDI controller, record it, and build projects for it from your own samples.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 18 18%22%3E%3Crect x=%221%22 y=%221%22 width=%227%22 height=%227%22 rx=%222%22 fill=%22%23e4572e%22/%3E%3Crect x=%2210%22 y=%221%22 width=%227%22 height=%227%22 rx=%223.5%22 fill=%22%23c98a12%22/%3E%3Crect x=%221%22 y=%2210%22 width=%227%22 height=%227%22 rx=%223.5%22 fill=%22%2316907c%22/%3E%3Crect x=%2210%22 y=%2210%22 width=%227%22 height=%227%22 rx=%222%22 fill=%22%236a58c9%22/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,6 +26,7 @@
     <header id="hdr"></header>
     <div id="subbar" hidden></div>
     <div id="listenBar" hidden></div>
+    <div id="updateBar" hidden></div>
     <main>
       <section id="view-live" class="view"></section>
       <section id="view-build" class="view" hidden></section>
@@ -55,5 +57,6 @@
   <script src="js/build.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/update.js"></script>
 </body>
 </html>

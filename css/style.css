@@ -120,6 +120,9 @@ body[data-view="live"] .only-build, body[data-view="build"] .only-live { display
 #listenBar { flex: none; display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 16px; background: var(--learn); color: var(--on-accent); }
 #listenBar b { font-weight: 600; }
 #listenBar .btn { background: color-mix(in srgb, var(--on-accent) 14%, transparent); border-color: color-mix(in srgb, var(--on-accent) 50%, transparent); color: var(--on-accent); }
+#updateBar { flex: none; display: flex; align-items: center; gap: 10px; min-height: 38px; padding: 6px 16px; background: var(--ok); color: var(--on-accent); }
+#updateBar b { font-weight: 600; }
+#updateBar .btn { background: transparent; border-color: color-mix(in srgb, var(--on-accent) 60%, transparent); color: var(--on-accent); }
 .lb-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--on-accent); animation: blink 1s steps(2) infinite; }
 .lb-cur { opacity: .8; }
 
