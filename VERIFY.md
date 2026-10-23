@@ -205,19 +205,26 @@ Imported, the S-4's own SAMPLE END / TRACK 2 save shows as such and exports unch
 | DISC START (48), SYNC | grid step round(x (n − 1)) of the n steps in the sample (grid 1/4: 0–7 beats; grid 1/16: 0–7.75) |
 | DISC LENGTH (49), SYNC | grid steps round(x (n − 1)) + 1 (1/4: 1–8 beats; 1/16: 0.25–8) |
 | DISC START / LENGTH, AS RECORDED | x times the sample's length in seconds (0–4 s) |
-| TAPE LENGTH (49), grid 1/1 | 1 + round(14x) bars, 4–60 beats at 120 BPM (60 beats = the 30 s a TAPE holds) |
+| TAPE LENGTH (49), grid 1/1 | 1 + round(14x) bars, 4–60 beats at 120 BPM (60 beats = the 30 s a TAPE holds; other tempos: round 5) |
 | TAPE LEVEL (50) | the material LEVEL curve: −100 to +12 dB (−50.63 dB at 18, +2.64 dB at 73) |
 | POLY PITCH (46) | −12 + 24x semitones, unrounded in CHROMATIC too |
 | POLY START / LENGTH (48 / 49) | x |
 | Mixer LEVEL (46–49, ch 16) | −100 to +6 dB, the same exponential shape with k = 3: 0 → −100, 64 → −13.04, 100 → +1.04, 127 → +6 |
 | Mixer PAN (54–57) / FILTER (50–53) | −1 + 2x |
 | COMPRESS (58) | x (64 → 0.504) |
-| MACRO 1–8 (46–53, ch 15) | −1 + 2x (macros without routings) |
+| MACRO 1–8 (46–53, ch 15) | −1 + 2x (with or without routings: round 5) |
 | MAIN (61) | not stored in the project |
 
 The save also showed two things the app doesn't depend on. The S-4 added `default_sample_tempo` to the unused DISC entry of TAPE and POLY tracks. After TEMPO or SPEED was set on a STRETCH DISC, it changed that DISC's START / LENGTH grid (to 1/1 and 1/16).
 
 Fed back into Live (`S4.follow.apply` on the imported save), every followed CC gives back the stored value. Stepped values come back as a different CC in the same step.
+
+## Calibration round 5: TAPE LENGTH at 90 BPM, macros with routings (2026-10-23)
+
+**S4T CAL5** (`tools/cal5_build.js`) runs at 90 BPM. It has 9 scenes of four TAPE tracks: 36 tapes, all the sample buffers a project has. Macros 1–4 are routed UNIPOLAR onto T1 PAN, 5–6 BIPOLAR onto T2 PAN, and 7–8 have no routings. `tools/cal5_send.js` set each tape's LENGTH (CC 49) to one of 36 values spread over 0–127, then the macros, and the S-4 saved the project. `tools/cal5_fit.py` reads it.
+
+- **TAPE LENGTH follows the tempo.** At 90 BPM it goes from 1 to 11 bars (4–44 beats), not 15. The knob runs from 1 bar to the 30 s a TAPE holds, here 11.25 bars, and rounds to whole bars: round(1 + x · (B − 1)) bars, B = 30 s in bars at the project tempo. That fits all 36 points at 90 BPM and the 8 of round 4 at 120 BPM (B = 15). A range of whole bars only (1 + round(10x)) misses 4 of the step edges.
+- **Macros map the same with routings.** UNIPOLAR, BIPOLAR or none, CC 0–127 sets −1 to +1 (CC 0, 32, 64, 96 gave −1, −0.496, 0.008, 0.512 on the UNIPOLAR ones). The routings were still there in the saved file.
 
 ## Not verified on the S-4
 

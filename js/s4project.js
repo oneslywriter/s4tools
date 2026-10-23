@@ -214,10 +214,11 @@
   // The material's SPEED / TEMPO / START / LENGTH (DISC), SPEED / LENGTH (TAPE) and PITCH / START / LENGTH (POLY)
   // as exportTrack writes them, in the S-4's units, worked out without building anything (for follow.js). A
   // START / LENGTH on a grid comes with the grid in beats and the number of steps its knob moves through: the
-  // sample's length in grid steps (DISC), or the bars a TAPE holds at the project tempo (TAPE, measured at
-  // 120 BPM). secs: the sample's length as the S-4 gets it, null until Build has read the file. An imported
+  // sample's length in grid steps (DISC), or for a TAPE the 30 s it holds at the project tempo, in grid steps
+  // and not a whole number (11.25 bars at 90 BPM: the knob rounds to whole bars, measured at 90 and 120 BPM).
+  // secs: the sample's length as the S-4 gets it, null until Build has read the file. An imported
   // track nobody changed gives the values the S-4 saved, which the export writes back as they are.
-  const tapeSteps = (proj, g) => Math.floor((TAPE_MAX_SECONDS * proj.bpm) / 60 / g + 1e-6);
+  const tapeSteps = (proj, g) => (TAPE_MAX_SECONDS * proj.bpm) / 60 / g;
   function storedRaw(proj, tr, key, b) {
     const val = k => (b[k] && typeof b[k].value === 'number' ? b[k].value : null), mode = k => (b[k] && b[k].mode) || '';
     if (key === 'poly') return { pitch: val('pitch'), start: val('start'), length: val('length') };

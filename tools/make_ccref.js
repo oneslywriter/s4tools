@@ -104,8 +104,12 @@
   row(tape, { cc: 46, name: 'SPEED', key: 'speed', mode: 'other scales (by name)', unit: 'st', summary: true, note: "the knob steps evenly through the scale's notes from -36 to +36 (see Scales)" });
   row(tape, { cc: 46, name: 'SPEED', key: 'speed', mode: M('FREE', 'free'), unit: 'st', to: c => P.SPEED.to(c), curve: P.SPEED });
   P.MAT.TAPE.forEach(sp => specRows(tape, sp, sp.cc, sp.key));
-  row(tape, { cc: 49, name: 'LENGTH', key: 'length', mode: M('1/1', '1/1') + ', at 120 BPM', unit: 'beats', to: c => 4 * (1 + Math.round((14 * c) / 127)), curve: { kind: 'steps', table: Array.from({ length: 15 }, (_, i) => 4 * (i + 1)) }, steps: true,
-    note: '1 to 15 bars: the 30 s a TAPE holds. Measured at 120 BPM only' });
+  row(tape, { cc: 49, name: 'LENGTH', key: 'length', mode: M('1/1', '1/1') + ', at 120 BPM', unit: 'beats', to: c => 4 * Math.round(1 + (14 * c) / 127), curve: { kind: 'steps', table: Array.from({ length: 15 }, (_, i) => 4 * (i + 1)) }, steps: true,
+    note: '1 to 15 bars: the 30 s a TAPE holds' });
+  row(tape, { cc: 49, name: 'LENGTH', key: 'length', mode: M('1/1', '1/1') + ', at 90 BPM', unit: 'beats', to: c => 4 * Math.round(1 + (10.25 * c) / 127), curve: { kind: 'steps', table: Array.from({ length: 11 }, (_, i) => 4 * (i + 1)) }, steps: true,
+    note: '1 to 11 bars: 30 s is 11.25 bars' });
+  row(tape, { cc: 49, name: 'LENGTH', key: 'length', mode: M('1/1', '1/1') + ', any tempo', unit: 'beats', formula: '4 · round(1 + x · (B - 1))',
+    note: 'B = the bars 30 s holds at the project tempo (BPM / 8), not rounded' });
   row(tape, { cc: 50, name: 'LEVEL', key: 'level', unit: 'dB', to: c => P.LEVEL.to(c), curve: P.LEVEL, def: 0 });
   row(tape, { cc: 53, name: 'XFADE', key: 'xfade', unit: '%', to: c => U.to(c), curve: U, def: 0 });
 
@@ -137,7 +141,7 @@
   row(mix, { cc: 58, name: 'COMPRESS', key: 'compress_amount', unit: '%', to: c => U.to(c), curve: U, def: 0 });
   row(mix, { cc: 61, name: 'MAIN', key: null, unit: 'none', note: 'not stored in a project, so its scale can\'t be read from a save' });
   const perf = section('Perform', 'Project-wide, like the mixer. MACRO 9-12 are notes 24-27 on channel 15, not CCs.', '15', 'global_slots.perform.perform');
-  row(perf, { cc: '46-53', name: 'MACRO 1-8', key: 'macro1-8', unit: '±', to: c => BI.to(c), curve: BI, def: 0, note: 'measured on macros without routings; the screen shows a macro as uni- or bipolar depending on its routings' });
+  row(perf, { cc: '46-53', name: 'MACRO 1-8', key: 'macro1-8', unit: '±', to: c => BI.to(c), curve: BI, def: 0, note: 'the same with UNIPOLAR, BIPOLAR or no routings; the screen shows a macro as uni- or bipolar depending on its routings' });
 
   // ---- the JSON: every value of every row ----
   const json = {

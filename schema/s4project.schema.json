@@ -582,7 +582,7 @@
          "properties": {
           "macro1": {
            "type": "object",
-           "description": "Macro 1's value, -1 to +1, linear on its CC (45 + 1, channel 15; CAL4). Its polarity on the screen follows its routings' modes; this field's mode is a leftover (\"\" or \"unipolar\") that does not decide it.",
+           "description": "Macro 1's value, -1 to +1, linear on its CC (45 + 1, channel 15), with UNIPOLAR, BIPOLAR or no routings (CAL4, CAL5). Its polarity on the screen follows its routings' modes; this field's mode is a leftover (\"\" or \"unipolar\") that does not decide it.",
            "x-label": "MACRO 1",
            "default": {
             "value": 0,
@@ -623,7 +623,7 @@
           },
           "macro2": {
            "type": "object",
-           "description": "Macro 2's value, -1 to +1, linear on its CC (45 + 2, channel 15; CAL4). Its polarity on the screen follows its routings' modes; this field's mode is a leftover (\"\" or \"unipolar\") that does not decide it.",
+           "description": "Macro 2's value, -1 to +1, linear on its CC (45 + 2, channel 15), with UNIPOLAR, BIPOLAR or no routings (CAL4, CAL5). Its polarity on the screen follows its routings' modes; this field's mode is a leftover (\"\" or \"unipolar\") that does not decide it.",
            "x-label": "MACRO 2",
            "default": {
             "value": 0,
@@ -664,7 +664,7 @@
           },
           "macro3": {
            "type": "object",
-           "description": "Macro 3's value, -1 to +1, linear on its CC (45 + 3, channel 15; CAL4). Its polarity on the screen follows its routings' modes; this field's mode is a leftover (\"\" or \"unipolar\") that does not decide it.",
+           "description": "Macro 3's value, -1 to +1, linear on its CC (45 + 3, channel 15), with UNIPOLAR, BIPOLAR or no routings (CAL4, CAL5). Its polarity on the screen follows its routings' modes; this field's mode is a leftover (\"\" or \"unipolar\") that does not decide it.",
            "x-label": "MACRO 3",
            "default": {
             "value": 0,
@@ -705,7 +705,7 @@
           },
           "macro4": {
            "type": "object",
-           "description": "Macro 4's value, -1 to +1, linear on its CC (45 + 4, channel 15; CAL4). Its polarity on the screen follows its routings' modes; this field's mode is a leftover (\"\" or \"unipolar\") that does not decide it.",
+           "description": "Macro 4's value, -1 to +1, linear on its CC (45 + 4, channel 15), with UNIPOLAR, BIPOLAR or no routings (CAL4, CAL5). Its polarity on the screen follows its routings' modes; this field's mode is a leftover (\"\" or \"unipolar\") that does not decide it.",
            "x-label": "MACRO 4",
            "default": {
             "value": 0,
@@ -746,7 +746,7 @@
           },
           "macro5": {
            "type": "object",
-           "description": "Macro 5's value, -1 to +1, linear on its CC (45 + 5, channel 15; CAL4). Its polarity on the screen follows its routings' modes; this field's mode is a leftover (\"\" or \"unipolar\") that does not decide it.",
+           "description": "Macro 5's value, -1 to +1, linear on its CC (45 + 5, channel 15), with UNIPOLAR, BIPOLAR or no routings (CAL4, CAL5). Its polarity on the screen follows its routings' modes; this field's mode is a leftover (\"\" or \"unipolar\") that does not decide it.",
            "x-label": "MACRO 5",
            "default": {
             "value": 0,
@@ -787,7 +787,7 @@
           },
           "macro6": {
            "type": "object",
-           "description": "Macro 6's value, -1 to +1, linear on its CC (45 + 6, channel 15; CAL4). Its polarity on the screen follows its routings' modes; this field's mode is a leftover (\"\" or \"unipolar\") that does not decide it.",
+           "description": "Macro 6's value, -1 to +1, linear on its CC (45 + 6, channel 15), with UNIPOLAR, BIPOLAR or no routings (CAL4, CAL5). Its polarity on the screen follows its routings' modes; this field's mode is a leftover (\"\" or \"unipolar\") that does not decide it.",
            "x-label": "MACRO 6",
            "default": {
             "value": 0,
@@ -828,7 +828,7 @@
           },
           "macro7": {
            "type": "object",
-           "description": "Macro 7's value, -1 to +1, linear on its CC (45 + 7, channel 15; CAL4). Its polarity on the screen follows its routings' modes; this field's mode is a leftover (\"\" or \"unipolar\") that does not decide it.",
+           "description": "Macro 7's value, -1 to +1, linear on its CC (45 + 7, channel 15), with UNIPOLAR, BIPOLAR or no routings (CAL4, CAL5). Its polarity on the screen follows its routings' modes; this field's mode is a leftover (\"\" or \"unipolar\") that does not decide it.",
            "x-label": "MACRO 7",
            "default": {
             "value": 0,
@@ -869,7 +869,7 @@
           },
           "macro8": {
            "type": "object",
-           "description": "Macro 8's value, -1 to +1, linear on its CC (45 + 8, channel 15; CAL4). Its polarity on the screen follows its routings' modes; this field's mode is a leftover (\"\" or \"unipolar\") that does not decide it.",
+           "description": "Macro 8's value, -1 to +1, linear on its CC (45 + 8, channel 15), with UNIPOLAR, BIPOLAR or no routings (CAL4, CAL5). Its polarity on the screen follows its routings' modes; this field's mode is a leftover (\"\" or \"unipolar\") that does not decide it.",
            "x-label": "MACRO 8",
            "default": {
             "value": 0,
@@ -9130,7 +9130,7 @@
     },
     "length": {
      "type": "object",
-     "description": "Tape length in beats at the project tempo, counted in tape time (VERIFY: a 100 BPM tape at 120 needs 9.6 beats), on the grid in mode; seconds in \"free\" (8.749521 s matched a recorded tape of 8.7495 s). On the 1/1 grid at 120 BPM, CC 49 steps evenly through 1 to 15 bars, the 30 s a TAPE holds (CAL4).",
+     "description": "Tape length in beats at the project tempo, counted in tape time (VERIFY: a 100 BPM tape at 120 needs 9.6 beats), on the grid in mode; seconds in \"free\" (8.749521 s matched a recorded tape of 8.7495 s). On the 1/1 grid, CC 49 goes from 1 bar to the 30 s a TAPE holds at the project tempo, in whole bars: round(1 + x (B - 1)) bars, B = 30 s in bars, not rounded (15 at 120 BPM, 11.25 at 90; CAL4, CAL5).",
      "x-label": "LENGTH",
      "x-unit": "beats",
      "x-cc": 49,

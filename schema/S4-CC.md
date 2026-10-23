@@ -63,7 +63,9 @@ Fields: `material.tape.*`.
 | 46 | SPEED `speed` | other scales (by name) | semitones | the knob steps evenly through the scale's notes from -36 to +36 (see Scales) | | | | | | |
 | 46 | SPEED `speed` | FREE ('free') | semitones | -36 | -17.86 | 0.2835 | 18.43 | 36 | lin -36 to 36 |  |
 | 48 | ROTATE `rotate` |  | -1 to +1 | -1 | -0.4961 | 0.0079 | 0.5118 | 1 | lin -1 to 1 | 0 (CC 64) |
-| 49 | LENGTH `length` | 1/1 ('1/1'), at 120 BPM | beats | 4 | 20 | 32 | 48 | 60 | 15 steps; 1 to 15 bars: the 30 s a TAPE holds. Measured at 120 BPM only |  |
+| 49 | LENGTH `length` | 1/1 ('1/1'), at 120 BPM | beats | 4 | 20 | 32 | 48 | 60 | 15 steps; 1 to 15 bars: the 30 s a TAPE holds |  |
+| 49 | LENGTH `length` | 1/1 ('1/1'), at 90 BPM | beats | 4 | 16 | 24 | 36 | 44 | 11 steps; 1 to 11 bars: 30 s is 11.25 bars |  |
+| 49 | LENGTH `length` | 1/1 ('1/1'), any tempo | beats | B = the bars 30 s holds at the project tempo (BPM / 8), not rounded | | | | | 4 · round(1 + x · (B - 1)) | |
 | 50 | LEVEL `level` |  | dB | -100 | -27.55 | -1.109 | 8.542 | 12 | rexp -100 to 12, k = 4 | 0 (CC 66) |
 | 51 | SOS `sos` |  | -1 to +1 | -1 | -0.4961 | 0.0079 | 0.5118 | 1 | lin -1 to 1 | 0 (CC 64) |
 | 53 | XFADE `xfade` |  | 0 to 1 | 0 | 0.252 | 0.5039 | 0.7559 | 1 | lin 0 to 1 | 0 (CC 0) |
@@ -72,6 +74,7 @@ Steps:
 
 - **SPEED, OCTAVES (''), the default:** CC 0-10 = -36 · 11-31 = -24 · 32-52 = -12 · 53-74 = 0 · 75-95 = 12 · 96-116 = 24 · 117-127 = 36
 - **LENGTH, 1/1 ('1/1'), at 120 BPM:** CC 0-4 = 4 · 5-13 = 8 · 14-22 = 12 · 23-31 = 16 · 32-40 = 20 · 41-49 = 24 · 50-58 = 28 · 59-68 = 32 · 69-77 = 36 · 78-86 = 40 · 87-95 = 44 · 96-104 = 48 · 105-113 = 52 · 114-122 = 56 · 123-127 = 60
+- **LENGTH, 1/1 ('1/1'), at 90 BPM:** CC 0-6 = 4 · 7-18 = 8 · 19-30 = 12 · 31-43 = 16 · 44-55 = 20 · 56-68 = 24 · 69-80 = 28 · 81-92 = 32 · 93-105 = 36 · 106-117 = 40 · 118-127 = 44
 
 ### MATERIAL: POLY
 
@@ -292,7 +295,7 @@ Fields: `global_slots.perform.perform.*`. Project-wide, like the mixer. MACRO 9-
 
 | CC | Parameter | Mode | Stored as | CC 0 | CC 32 | CC 64 | CC 96 | CC 127 | Curve | Default |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 46-53 | MACRO 1-8 `macro1-8` |  | -1 to +1 | -1 | -0.4961 | 0.0079 | 0.5118 | 1 | lin -1 to 1; measured on macros without routings; the screen shows a macro as uni- or bipolar depending on its routings | 0 (CC 64) |
+| 46-53 | MACRO 1-8 `macro1-8` |  | -1 to +1 | -1 | -0.4961 | 0.0079 | 0.5118 | 1 | lin -1 to 1; the same with UNIPOLAR, BIPOLAR or no routings; the screen shows a macro as uni- or bipolar depending on its routings | 0 (CC 64) |
 
 ## Not covered
 

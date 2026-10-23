@@ -269,7 +269,7 @@ TAPE = {
                    [mode(n, n.upper(), 'semitones on this scale\'s notes', {'enum': in_scale(n)}) for n in SCALE_NAMES if n != 'octaves'] +
                    [mode('free', 'FREE', 'continuous semitones', num(-36, 36))]),
     'rotate': bi('ROTATE', 48, 'Rotate the tape loop, -1 to +1.'),
-    'length': param('LENGTH', 'Tape length in beats at the project tempo, counted in tape time (VERIFY: a 100 BPM tape at 120 needs 9.6 beats), on the grid in mode; seconds in "free" (8.749521 s matched a recorded tape of 8.7495 s). On the 1/1 grid at 120 BPM, CC 49 steps evenly through 1 to 15 bars, the 30 s a TAPE holds (CAL4).', num(0), 'beats', None, 49,
+    'length': param('LENGTH', 'Tape length in beats at the project tempo, counted in tape time (VERIFY: a 100 BPM tape at 120 needs 9.6 beats), on the grid in mode; seconds in "free" (8.749521 s matched a recorded tape of 8.7495 s). On the 1/1 grid, CC 49 goes from 1 bar to the 30 s a TAPE holds at the project tempo, in whole bars: round(1 + x (B - 1)) bars, B = 30 s in bars, not rounded (15 at 120 BPM, 11.25 at 90; CAL4, CAL5).', num(0), 'beats', None, 49,
                     [mode(g, g, f'grid {g}; value in beats') for g in GRIDS] + [mode('free', 'FREE', 'seconds', num(0), 's')]),
     'level': LEVEL('LEVEL', 50),
     'sos': bi('SOS', 51, 'Sound-on-sound, -1 to +1.'),
@@ -427,7 +427,7 @@ def mix_targets(routes):
     return obj('Mixer targets.', {'mix': obj('Mixer targets: ' + ', '.join(MIX_TARGETS) + '.', {k: REF(routes) for k in MIX_TARGETS})})
 
 
-MACRO_DESC = "Macro {k}'s value, -1 to +1, linear on its CC (45 + {k}, channel 15; CAL4). Its polarity on the screen follows its routings' modes; this field's mode is a leftover (\"\" or \"unipolar\") that does not decide it."
+MACRO_DESC = "Macro {k}'s value, -1 to +1, linear on its CC (45 + {k}, channel 15), with UNIPOLAR, BIPOLAR or no routings (CAL4, CAL5). Its polarity on the screen follows its routings' modes; this field's mode is a leftover (\"\" or \"unipolar\") that does not decide it."
 global_slots = obj('Project-wide state (not per scene).', {
     'mixer': obj('The MIX view: one mixer for all scenes.', {
         'mix': {'type': 'object', 'description': 'Mixer values. Empty: all at their defaults (0 dB, centre, open, unmuted, no compression).',
