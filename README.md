@@ -28,6 +28,12 @@ and open http://localhost:8765/. Any https host works too.
 python tools/check_schema.py "PROJECTS/MY SONG.s4project/project.json"
 ```
 
+**A deleted clip that keeps coming back?** Deleting a track's sample on the S-4 can leave its audio file in the project, and the S-4 loads it again next time. `tools/s4doctor.py` finds those files in a project or a whole PROJECTS folder (the S-4 in USB storage mode). With `--move-to` it moves them out of the project into a folder you name; it never deletes anything:
+
+```bash
+python tools/s4doctor.py "D:/PROJECTS" --move-to "C:/s4-moved"
+```
+
 ## Measurements
 
 Units, modes, defaults and the export format were measured on an S-4: test projects with known material, recorded over its ten USB channels and analysed, plus readings from its screen. [VERIFY.md](VERIFY.md) lists the results and `tools/` holds the scripts (`tools/devserver.py` is a local server that also accepts their uploads). [S4-TODO.md](S4-TODO.md) tracks what is still open.
