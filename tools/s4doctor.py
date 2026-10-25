@@ -11,11 +11,13 @@ no sample name, so TAPEs aren't checked this way.
 
 Unused files: audio in discs/ or tapes/ that no track in project.json points at, for information.
 
-usage: s4doctor.py PATH [PATH ...] [--move-to DIR]
-  PATH       a project (NAME.s4project) or a folder of them (the S-4's PROJECTS folder, in USB storage mode)
+usage: s4doctor.py [PATH ...] [--move-to DIR]
+  PATH       a project (NAME.s4project) or a folder of them (the S-4's PROJECTS folder, in USB storage mode).
+             Without one (a double-click, a desktop shortcut), it finds the S-4's drive itself, asks before
+             moving anything (to a folder on the desktop), and waits for Enter before the window closes.
   --move-to  moves each ghost file into DIR/<project>/discs|tapes/ and lists it in DIR/moved.txt, so it can
              be put back. Nothing is ever deleted. Load the project on the S-4 afterwards to check."""
-import json, os, shutil, sys
+import glob, json, os, shutil, string, sys
 from datetime import datetime
 
 FILES = {  # material block -> where its audio lives
@@ -65,6 +67,34 @@ def projects(path):
             if n.lower().endswith('.s4project') and os.path.isfile(os.path.join(path, n, 'project.json'))]
 
 
+def find_s4():
+    """The PROJECTS folders of connected drives that hold S-4 projects (the S-4 in USB storage mode)."""
+    if os.name == 'nt':
+        try:  # an empty card reader would otherwise pop up "There is no disk in the drive"
+            import ctypes
+            ctypes.windll.kernel32.SetErrorMode(1)
+        except Exception:
+            pass
+        roots = [f'{d}:\\PROJECTS' for d in string.ascii_uppercase[2:]]
+    else:  # macOS, then the usual Linux mount points
+        roots = glob.glob('/Volumes/*/PROJECTS') + glob.glob('/media/*/*/PROJECTS') + glob.glob('/run/media/*/*/PROJECTS') + glob.glob('/mnt/*/PROJECTS')
+    found = []
+    for r in roots:
+        try:
+            if os.path.isdir(r) and any(n.lower().endswith('.s4project') for n in os.listdir(r)):
+                found.append(r)
+        except OSError:
+            pass
+    return found
+
+
+def ask(question):
+    try:
+        return input(question)
+    except EOFError:  # no keyboard (run from a script): the safe answer
+        return ''
+
+
 def main(args):
     move_to = None
     if '--move-to' in args:
@@ -73,9 +103,18 @@ def main(args):
             sys.exit('--move-to needs a folder')
         move_to = args[i + 1]
         args = args[:i] + args[i + 2:]
-    if not args:
+    if args and args[0] in ('-h', '--help'):
         sys.exit(__doc__)
-    found = moved = 0
+    interactive = not args  # a double-click or a desktop shortcut: find the S-4, ask, keep the window open
+    if interactive:
+        args = find_s4()
+        if not args:
+            print('No S-4 found. Put the S-4 in USB storage mode (its drive appears on this computer), then run this again.')
+            ask('\nPress Enter to close.')
+            return
+        print('Scanning ' + ', '.join(args) + '\n')
+
+    found_ghosts = []  # (proj, name, file)
     for path in args:
         for proj in projects(path):
             name = os.path.basename(os.path.normpath(proj))
@@ -88,22 +127,40 @@ def main(args):
                 continue
             print(name)
             for f, where in ghosts:
-                found += 1
+                found_ghosts.append((proj, name, f))
                 print(f'  ghost   {f}: {", ".join(where)} has no sample, but the file is still there, so the S-4 loads it again')
-                if move_to:
-                    src, dest = os.path.normpath(os.path.join(proj, f)), os.path.normpath(os.path.join(move_to, name, f))
-                    if os.path.exists(dest):
-                        print(f'          not moved: {dest} already exists')
-                        continue
-                    os.makedirs(os.path.dirname(dest), exist_ok=True)
-                    shutil.move(src, dest)
-                    with open(os.path.join(move_to, 'moved.txt'), 'a', encoding='utf-8') as log:
-                        log.write(f'{datetime.now():%Y-%m-%d %H:%M}  {src}  ->  {dest}\n')
-                    moved += 1
-                    print(f'          moved to {dest}')
             for f in unused:
                 print(f'  unused  {f}: no track in project.json points at it (if a clip turns up in an empty scene, this may be why)')
-    print(f'{found} ghost file{"" if found == 1 else "s"}' + (f', {moved} moved to {move_to} (listed in moved.txt)' if move_to else '' if not found else '; --move-to DIR moves them out of the project'))
+    n = len(found_ghosts)
+    print(f'\n{n} ghost file{"" if n == 1 else "s"}' + ('' if n or not interactive else ': nothing to fix.'))
+
+    if n and not move_to and interactive:
+        home = os.path.expanduser('~')
+        desk = os.path.join(home, 'Desktop')
+        dest = os.path.normpath(os.path.join(desk if os.path.isdir(desk) else home, f's4doctor moved {datetime.now():%Y-%m-%d %H%M}'))
+        answer = ask(f'\nMove {"it" if n == 1 else "them"} off the S-4 into "{dest}"? Nothing is deleted.\nType y and press Enter to move, or just press Enter to leave everything as it is: ')
+        if answer.strip().lower() in ('y', 'yes'):
+            move_to = dest
+    if n and not move_to and not interactive:
+        print('--move-to DIR moves them out of the project')
+
+    if move_to and n:
+        moved = 0
+        for proj, name, f in found_ghosts:
+            src, dest = os.path.normpath(os.path.join(proj, f)), os.path.normpath(os.path.join(move_to, name, f))
+            if os.path.exists(dest):
+                print(f'  not moved: {dest} already exists')
+                continue
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
+            shutil.move(src, dest)
+            with open(os.path.join(move_to, 'moved.txt'), 'a', encoding='utf-8') as log:
+                log.write(f'{datetime.now():%Y-%m-%d %H:%M}  {src}  ->  {dest}\n')
+            moved += 1
+            print(f'  moved {name}/{f}')
+        print(f'\n{moved} moved to {os.path.normpath(move_to)} (moved.txt lists where each came from).')
+        print('Eject the S-4\'s drive, leave storage mode and restart the S-4, then load the project to check.')
+    if interactive:
+        ask('\nPress Enter to close.')
 
 
 if __name__ == '__main__':

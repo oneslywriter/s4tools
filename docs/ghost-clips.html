@@ -43,6 +43,7 @@
     h2 { font-size: 23px; letter-spacing: -.01em; margin: 0 0 12px; padding-left: 12px; border-left: 4px solid var(--t1); }
     section:nth-of-type(2) h2 { border-color: var(--t2); }
     section:nth-of-type(3) h2 { border-color: var(--t3); }
+    section:nth-of-type(4) h2 { border-color: var(--t4); }
     .lede { margin: 12px 0 0; font-size: 18px; color: var(--ink); max-width: 64ch; }
     p { margin: 10px 0; max-width: 68ch; }
     a { color: var(--learn); }
@@ -67,6 +68,29 @@
     a:focus-visible, button:focus-visible { outline: 2px solid var(--learn); outline-offset: 2px; }
     .aside { margin-top: 16px; padding: 12px 16px; border-radius: 8px; background: var(--card); border: 1px solid var(--rule); }
     .aside p { margin: 6px 0; }
+    h3 { color: var(--ink); font-size: 18px; margin: 26px 0 4px; }
+    figure { margin: 12px 0 2px; }
+    figcaption { margin-top: 6px; font-size: 13px; color: var(--mute); }
+    /* drawn illustrations of each step (not screenshots), in the page's colours */
+    .shot { padding: 16px; border-radius: 8px; background: var(--card); border: 1px solid var(--rule); overflow-x: auto; }
+    .ctx { display: flex; align-items: flex-start; gap: 18px; min-width: 520px; }
+    .fileicon { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 92px; font-size: 13px; color: var(--ink); }
+    .fileicon i { position: relative; width: 38px; height: 46px; border-radius: 3px 12px 3px 3px; border: 2px solid var(--ink2); background: var(--bg); }
+    .fileicon i::after { content: 'py'; position: absolute; left: 0; right: 0; bottom: 6px; text-align: center; font: 600 11px var(--mono); color: var(--t3); }
+    .fileicon span { padding: 1px 4px; border-radius: 3px; background: var(--learn); color: var(--on-accent); }
+    .menu { min-width: 190px; padding: 4px; border-radius: 6px; border: 1px solid var(--rule); background: var(--bg); box-shadow: var(--shadow); font-size: 14px; color: var(--ink); }
+    .menu div { display: flex; justify-content: space-between; gap: 18px; padding: 4px 10px; border-radius: 4px; white-space: nowrap; }
+    .menu .hi { background: var(--learn); color: var(--on-accent); }
+    .menu hr { height: 1px; margin: 4px 2px; border: 0; background: var(--rule); }
+    .menu.sub { margin-top: 68px; margin-left: -14px; }
+    .desk { display: flex; gap: 26px; align-items: flex-end; }
+    .desk .fileicon i { border-color: var(--ink2); }
+    .desk .fileicon i::before { content: '↗'; position: absolute; left: -7px; bottom: -7px; width: 16px; height: 16px; border-radius: 3px; background: var(--bg); border: 1px solid var(--ink2); font: 600 11px/14px var(--sans); text-align: center; color: var(--ink); }
+    .desk .fileicon:not(:first-child) span { background: none; color: var(--ink); }
+    .console { border-radius: 8px; overflow: hidden; border: 1px solid var(--rule); }
+    .console .bar { padding: 6px 12px; font-size: 13px; background: #2b2d31; color: #d8dade; }
+    .console pre { margin: 0; padding: 12px 14px; background: #121316; color: #d8dade; font: 13px/1.55 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+    .console .y { color: #8fd4a8; }
     footer { border-top: 1px solid var(--rule); padding-top: 14px; color: var(--mute); font-size: 14px; }
     footer p { margin: 4px 0; }
   </style>
@@ -131,6 +155,72 @@
         <p><strong>To undo,</strong> copy a file back to the place listed in <span class="file">moved.txt</span>, with the S-4 in storage mode.</p>
         <p><strong>To keep one,</strong> point the tool at a single project (<code>"D:/PROJECTS/MY SONG.s4project"</code>) or move just the files you want by hand: it moves every leftover it finds in the folders you give it.</p>
       </div>
+    </section>
+
+    <section>
+      <h2>Put it on your desktop</h2>
+      <p>Run without a path, s4doctor finds the S-4's drive by itself, lists what it finds and asks before moving anything to a new folder on your desktop. A desktop icon then makes the whole check one double-click.</p>
+
+      <h3>Windows</h3>
+      <ol class="steps">
+        <li><div>If you don't have Python 3 yet, install it from <a href="https://www.python.org/downloads/">python.org</a>. In the installer, tick <strong>Add python.exe to PATH</strong>.</div></li>
+        <li><div>Download <a href="https://raw.githubusercontent.com/oneslywriter/s4tools/main/tools/s4doctor.py">s4doctor.py</a> and move it to your <strong>Documents</strong> folder. The icon points there, so leave it in place.</div></li>
+        <li><div>Right-click <span class="file">s4doctor.py</span>. On Windows 11, choose <strong>Show more options</strong> first. Then choose <strong>Send to › Desktop (create shortcut)</strong>.
+          <figure>
+            <div class="shot"><div class="ctx" aria-hidden="true">
+              <div class="fileicon"><i></i><span>s4doctor.py</span></div>
+              <div class="menu"><div>Open</div><div>Open with<span>›</span></div><hr><div class="hi">Send to<span>›</span></div><hr><div>Cut</div><div>Copy</div><div>Rename</div></div>
+              <div class="menu sub"><div>Compressed (zipped) folder</div><div class="hi">Desktop (create shortcut)</div><div>Documents</div></div>
+            </div></div>
+            <figcaption>Illustration: right-click the file, then Send to › Desktop (create shortcut).</figcaption>
+          </figure></div></li>
+        <li><div>On the desktop, right-click the new shortcut, choose <strong>Rename</strong> and call it <strong>Scan S-4</strong>.
+          <figure>
+            <div class="shot"><div class="desk" aria-hidden="true">
+              <div class="fileicon"><i></i><span>Scan S-4</span></div>
+            </div></div>
+            <figcaption>Illustration: the shortcut on your desktop, with its small arrow.</figcaption>
+          </figure></div></li>
+        <li><div>Put the S-4 in USB storage mode and double-click <strong>Scan S-4</strong>. A window lists what it finds. If there are leftovers, type <code>y</code> and press Enter to move them, or just press Enter to leave everything as it is.
+          <figure>
+            <div class="console" aria-label="The scan window: one leftover file found and moved">
+              <div class="bar">Scan S-4</div>
+<pre>Scanning D:\PROJECTS
+
+MY SONG.s4project
+  ghost   discs/scene7_track1.wav: scene 7 T1 (DISC) has no sample, but the file is still there, so the S-4 loads it again
+
+1 ghost file
+
+Move it off the S-4 into "C:\Users\you\Desktop\s4doctor moved 2026-10-25 1456"? Nothing is deleted.
+Type y and press Enter to move, or just press Enter to leave everything as it is: <span class="y">y</span>
+  moved MY SONG.s4project/discs/scene7_track1.wav
+
+1 moved to C:\Users\you\Desktop\s4doctor moved 2026-10-25 1456 (moved.txt lists where each came from).
+Eject the S-4's drive, leave storage mode and restart the S-4, then load the project to check.
+
+Press Enter to close.</pre>
+            </div>
+            <figcaption>Illustration: the scan window after finding one leftover file and moving it.</figcaption>
+          </figure></div></li>
+      </ol>
+      <div class="aside">
+        <p><strong>If double-clicking opens the script in an editor</strong> instead of running it, make a small launcher. Open Notepad, paste these two lines, choose <strong>File › Save as</strong>, set <strong>Save as type</strong> to <strong>All files</strong> and save it on your desktop as <span class="file">Scan S-4.bat</span>:</p>
+        <div class="cmd"><code id="c3">@echo off
+py "%USERPROFILE%\Documents\s4doctor.py"</code><button type="button" data-copy="c3">Copy</button></div>
+        <p>If your Documents folder is in OneDrive, use <code>%USERPROFILE%\OneDrive\Documents\s4doctor.py</code> instead.</p>
+      </div>
+
+      <h3>Mac</h3>
+      <ol class="steps">
+        <li><div>Download <a href="https://raw.githubusercontent.com/oneslywriter/s4tools/main/tools/s4doctor.py">s4doctor.py</a> into your <strong>Documents</strong> folder.</div></li>
+        <li><div>Open TextEdit, choose <strong>Format › Make Plain Text</strong> and type these two lines. Save it on your Desktop as <span class="file">Scan S-4.command</span>; if TextEdit asks about the extension, choose <strong>Use .command</strong>.
+          <div class="cmd"><code id="c4">#!/bin/sh
+python3 ~/Documents/s4doctor.py</code><button type="button" data-copy="c4">Copy</button></div></div></li>
+        <li><div>Once, open Terminal and run this, so the file can be double-clicked:
+          <div class="cmd"><code id="c5">chmod +x ~/Desktop/Scan\ S-4.command</code><button type="button" data-copy="c5">Copy</button></div></div></li>
+        <li><div>Put the S-4 in USB storage mode and double-click <strong>Scan S-4.command</strong>. The first time, macOS may offer to install the developer tools that provide <code>python3</code>: accept, then double-click it again.</div></li>
+      </ol>
     </section>
 
     <footer>

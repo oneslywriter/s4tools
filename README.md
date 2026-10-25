@@ -28,7 +28,7 @@ and open http://localhost:8765/. Any https host works too.
 python tools/check_schema.py "PROJECTS/MY SONG.s4project/project.json"
 ```
 
-**A deleted clip that keeps coming back?** Deleting a track's sample on the S-4 can leave its audio file in the project, and the S-4 loads it again next time. `tools/s4doctor.py` finds those files in a project or a whole PROJECTS folder (the S-4 in USB storage mode). With `--move-to` it moves them out of the project into a folder you name; it never deletes anything:
+**A deleted clip that keeps coming back?** Deleting a track's sample on the S-4 can leave its audio file in the project, and the S-4 loads it again next time. `tools/s4doctor.py` finds those files in a project or a whole PROJECTS folder (the S-4 in USB storage mode). Double-clicked (or run without a path) it finds the S-4 by itself and asks before moving anything to a folder on your desktop. With `--move-to` it moves them out of the project into a folder you name; it never deletes anything:
 
 ```bash
 python tools/s4doctor.py "D:/PROJECTS" --move-to "C:/s4-moved"
