@@ -1,20 +1,30 @@
 'use strict';
-// Play on S-4 (the hardware preview): play Build's scenes through the S-4 itself instead of simulating it.
-// The S-4 is also a 10-in / 10-out USB audio interface with fixed inputs: one stereo pair per track plus
-// one straight to the master. A track in BYPASS runs whatever arrives on its pair through its real
-// effects and the S-4's mixer. So each track's audio (warped, trimmed, at the device LEVEL, dry) is sent
-// to its own pair, and the scene's effect settings (GRANULAR, FILTER, COLOR, SPACE) go to the tracks over MIDI.
-//
-// While it is on, the stream to the S-4 never stops: between sounds it carries silence, and turning it off
-// fades out and keeps sending silence for a moment first. (With no stream the S-4 keeps replaying the
-// last 1024 samples it received, which is heard as a 47 Hz buzz on a track in BYPASS.)
+// Play on: where Build's preview plays (the Play on menu in Build's toolbar).
+//   'tracks'  the S-4's tracks: each track's audio (warped, trimmed, at the device LEVEL, dry) goes to its own
+//             USB input pair, and the scene's effect settings (GRANULAR, FILTER, COLOR, SPACE) go to the tracks
+//             over MIDI. A track in BYPASS runs its pair through its real effects and the S-4's mixer.
+//   'main'    the S-4's main out: the mix as heard here, on the pair that goes straight to the master (no
+//             BYPASS needed).
+//   'here'    an output on this computer (settings.hereId; '' the default): the app's own mix (audio.js).
+// The S-4 is a 10-in / 10-out USB audio interface with fixed inputs: one stereo pair per track plus one
+// straight to the master. While Live plays on it, the stream to the S-4 never stops: between sounds it carries
+// silence, and stopping fades out and keeps sending silence for a moment first. (With no stream the S-4 keeps
+// replaying the last 1024 samples it received, which is heard as a 47 Hz buzz on a track in BYPASS.)
 (function (S4) {
   const A = S4.audio;
   const HW = S4.hw = {
-    on: false, ctx: null, out: null, merger: null, outputs: null,
-    settings: Object.assign({ sinkId: '', sinkLabel: '', order: 'auto', pushFx: true }, S4.store.get('hw', {})),
+    on: false, mode: 'here', ctx: null, out: null, merger: null, outputs: null, // on: mode 'tracks'
+    settings: Object.assign({ s4Id: '', s4Label: '', hereId: '', hereLabel: '', order: 'auto', pushFx: true }, S4.store.get('hw', {})),
   };
   const save = () => S4.store.set('hw', HW.settings);
+  // before Play on, the one output setting was the hardware preview's, so the S-4's
+  if ('sinkId' in HW.settings) {
+    if (HW.settings.sinkId && !HW.settings.s4Id) Object.assign(HW.settings, { s4Id: HW.settings.sinkId, s4Label: HW.settings.sinkLabel || '' });
+    delete HW.settings.sinkId;
+    delete HW.settings.sinkLabel;
+    save();
+  }
+  A.sinkId = HW.settings.hereId;
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
   // First channel (0-based, as the browser numbers them) of each track's input pair, and of the pair that
@@ -40,19 +50,38 @@
     return HW.outputs;
   };
   HW.looksLikeS4 = label => /source\/sink|s-?4|torso/i.test(label || '');
-  HW.setOutput = function (dev) {
-    HW.settings.sinkId = dev ? dev.deviceId : '';
-    HW.settings.sinkLabel = dev ? dev.label : '';
-    save();
-    if (HW.on) HW.stop().then(() => HW.start());
-    S4.emit('hw');
+  // the S-4's output: the one used before if it's still there, else the first that looks like it
+  HW.findS4 = async function (ask) {
+    const outs = (await HW.listOutputs(ask)).filter(d => d.deviceId !== 'default' && HW.looksLikeS4(d.label));
+    return outs.find(d => d.deviceId === HW.settings.s4Id) || outs[0] || null;
   };
 
-  // ---------- on / off ----------
-  HW.start = async function () {
-    if (HW.on) return;
+  // ---------- where it plays ----------
+  // mode 'tracks' | 'main' | 'here'; dev: the output (for 'here' null is the default; for the S-4 found if null)
+  HW.playOn = async function (mode, dev) {
+    if (mode === 'here') {
+      await HW.stop();
+      HW.settings.hereId = dev ? dev.deviceId : '';
+      HW.settings.hereLabel = dev ? dev.label : '';
+      save();
+      await A.setSink(HW.settings.hereId);
+      S4.emit('hw');
+      return;
+    }
+    const s4 = dev || (await HW.findS4(false)) || (await HW.findS4(true));
+    if (!s4) throw new Error('The S-4\'s audio output isn\'t there. Plug it in over USB, then choose it again.');
+    HW.settings.s4Id = s4.deviceId;
+    HW.settings.s4Label = s4.label;
+    save();
+    await HW.stop();
+    await HW.start(mode);
+  };
+
+  // ---------- on the S-4 / off ----------
+  HW.start = async function (mode = 'tracks') {
+    if (HW.mode !== 'here') return;
     const opts = { latencyHint: 'interactive', sampleRate: 48000 };
-    if (HW.settings.sinkId && HW.settings.sinkId !== 'default') opts.sinkId = HW.settings.sinkId;
+    if (HW.settings.s4Id && HW.settings.s4Id !== 'default') opts.sinkId = HW.settings.s4Id;
     let ctx;
     try { ctx = new AudioContext(opts); } catch (e) {
       // the chosen device is gone: fall back to the default output
@@ -63,7 +92,7 @@
     const n = ctx.destination.maxChannelCount;
     if (n < 10) {
       await ctx.close();
-      throw new Error(`This output has ${n} channels. Play on S-4 needs the S-4's own output (10 channels).`);
+      throw new Error(`This output has ${n} channels. Playing on the S-4 needs its own output (10 channels).`);
     }
     ctx.destination.channelCount = n;
     ctx.destination.channelInterpretation = 'discrete';
@@ -71,6 +100,17 @@
     merger.connect(out);
     out.connect(ctx.destination);
     const m = map();
+    if (mode === 'main') {
+      // the mix as heard here, on the pair that goes straight to the S-4's main out
+      const mix = A.makeChains(ctx), sp = ctx.createChannelSplitter(2);
+      mix.out.connect(sp);
+      sp.connect(merger, 0, m.master); sp.connect(merger, 1, m.master + 1);
+      Object.assign(HW, { ctx, out, merger, mode, on: false });
+      A.useOutput({ ctx, chains: mix.chains, out: mix.out });
+      ctx.onstatechange = () => { if (ctx.state === 'closed' && HW.ctx === ctx) offline(); };
+      S4.emit('hw');
+      return;
+    }
     const chains = m.pairs.map(base => {
       // mono samples are spread to both sides, then left/right go to the track's pair
       const input = ctx.createGain(), g = ctx.createGain(), sp = ctx.createChannelSplitter(2);
@@ -79,7 +119,7 @@
       sp.connect(merger, 0, base); sp.connect(merger, 1, base + 1);
       return { input, g, hw: true };
     });
-    Object.assign(HW, { ctx, out, merger, on: true });
+    Object.assign(HW, { ctx, out, merger, mode, on: true });
     full.clear();
     A.useOutput({ ctx, chains, out });
     ctx.onstatechange = () => { if (ctx.state === 'closed' && HW.ctx === ctx) offline(); };
@@ -88,9 +128,10 @@
   };
 
   HW.stop = async function () {
-    if (!HW.on) return;
+    if (HW.mode === 'here') return;
     const { ctx, out } = HW;
     HW.on = false;
+    HW.mode = 'here';
     out.gain.setTargetAtTime(0, ctx.currentTime, 0.008);
     await sleep(60);
     A.stop();
@@ -102,22 +143,22 @@
     S4.emit('hw');
   };
   function offline() {
-    if (!HW.on) return;
+    if (HW.mode === 'here') return;
     HW.on = false;
+    HW.mode = 'here';
     HW.ctx = HW.out = HW.merger = null;
     A.useOutput(null);
     S4.emit('hw');
-    S4.toast('Play on S-4 stopped: the audio output went away', 'err');
+    S4.toast('Playing on the S-4 stopped: its audio output went away', 'err');
   }
-  HW.toggle = () => (HW.on ? HW.stop() : HW.start());
 
   // Leaving the page while a sound plays would leave that block looping on the S-4: silence it first.
-  window.addEventListener('pagehide', () => { if (HW.on && HW.out) HW.out.gain.value = 0; });
+  window.addEventListener('pagehide', () => { if (HW.mode !== 'here' && HW.out) HW.out.gain.value = 0; });
 
   // ---------- test tones ----------
   // t: 0-3 for a track, 'master' for the pair that goes straight to the master. A short rising blip.
   HW.test = function (t) {
-    if (!HW.on) return;
+    if (HW.mode === 'here') return;
     const ctx = HW.ctx, m = map(), base = t === 'master' ? m.master : m.pairs[t];
     const t0 = ctx.currentTime + 0.03;
     [0, 4, 7].forEach((st, k) => {
@@ -132,6 +173,11 @@
       o.start(a);
       o.stop(a + 0.3);
     });
+  };
+  // a beep on each track's input, then the main out (on the main out only, there)
+  HW.testAll = function () {
+    if (HW.mode === 'here') return;
+    (HW.mode === 'tracks' ? [0, 1, 2, 3, 'master'] : ['master']).forEach((t, k) => setTimeout(() => HW.test(t), k * 700));
   };
 
   // ---------- effects over MIDI ----------
@@ -187,7 +233,7 @@
   function warnNoMidi() {
     if (warned) return;
     warned = true;
-    S4.toast('Play on S-4: there is no MIDI connection to the S-4, so the effect settings aren\'t sent (the audio still plays)', 'err');
+    S4.toast('Playing on the S-4\'s tracks: there is no MIDI connection to the S-4, so the effect settings aren\'t sent (the audio still plays)', 'err');
   }
   const sounding = () => (A.playing ? A.cur : S4.cr.sel.scene);
   function pushCurrent(force) { if (HW.on && HW.settings.pushFx) HW.pushScene(sounding(), force); }
@@ -211,7 +257,8 @@
   HW.setOrder = function (order) {
     HW.settings.order = order;
     save();
-    if (HW.on) HW.stop().then(() => HW.start());
+    const mode = HW.mode;
+    if (mode !== 'here') HW.stop().then(() => HW.start(mode));
     S4.emit('hw');
   };
 })(window.S4);

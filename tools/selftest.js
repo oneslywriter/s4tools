@@ -902,7 +902,9 @@
     rule.children[0].click();
     key(document, 'Escape');
     $$('#subbar .btn').find(b => b.classList.contains('hw')).click();
-    ok(menuItems().some(x => x.startsWith('Play on the S-4')) && menuItems().some(x => x.startsWith('Beep on T1')), 'Play on S-4 menu', menuItems());
+    for (let k = 0; k < 20 && !$('.menu'); k++) await sleep(25);
+    ok(menuItems().some(x => x.startsWith('Its tracks')) && menuItems().some(x => x.startsWith('Its main out')) && $$('.menu .menu-head').some(x => x.textContent === 'This computer'),
+      'Play on: the S-4\'s tracks, its main out, this computer', menuItems());
     S4.closeMenu();
     // bpm
     const b0 = S4.cr.proj.bpm;
@@ -1153,11 +1155,18 @@
     ok($('.modal-head .lbl') && $('.modal-head .lbl').textContent === 'S-4 project opened', 'S-4 folder imported with a report');
     ok($$('.bd-pads .pad.used').length > 0, 'its scenes are there');
     key(document, 'Escape');
-    // Play on S-4 without an S-4 audio output: a message, no crash
-    $$('#subbar .btn').find(b => b.classList.contains('hw')).click();
-    pick('Play on the S-4');
+    // Play on the S-4 without an S-4 audio output: a message, no crash; then back to this computer
+    const hwBtn = $$('#subbar .btn').find(b => b.classList.contains('hw'));
+    hwBtn.click();
+    for (let k = 0; k < 20 && !$('.menu'); k++) await sleep(25);
+    pick('Its tracks');
     await sleep(800);
-    ok(!S4.hw.on && $('#toast').classList.contains('show'), 'Play on S-4 explains why it cannot start', $('#toast').textContent);
+    ok(S4.hw.mode === 'here' && $('#toast').classList.contains('show'), 'playing on the S-4 explains why it cannot start', $('#toast').textContent);
+    hwBtn.click();
+    for (let k = 0; k < 20 && !$('.menu'); k++) await sleep(25);
+    pick(menuItems().find(x => /default/i.test(x)) || 'The default output');
+    await sleep(100);
+    ok(S4.hw.mode === 'here' && !S4.hw.settings.hereId && /This computer/.test(hwBtn.textContent), 'the default output on this computer', hwBtn.textContent);
     // the pre-click click here and on an S-4 track (none there)
     const R = S4.rec;
     if (typeof MediaStreamTrackGenerator === 'function') {

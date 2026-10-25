@@ -161,7 +161,7 @@ The tempo is the Build project's. On the first beat the S-4 starts (and records,
 
 Build makes a complete S-4 project: up to 128 scenes of four tracks each.
 
-**The toolbar** under the header holds the **Project** menu, the name, the tempo (click to type, scroll to change), the **Key**, play and **Loop** for the preview, **Play on S-4** and **Export**.
+**The toolbar** under the header holds the **Project** menu, the name, the tempo (click to type, scroll to change), the **Key**, play and **Loop** for the preview, **Play on** and **Export**.
 
 ### Scenes
 
@@ -236,18 +236,17 @@ Browsers don't let a page keep a folder open between visits, so you choose it ag
 
 ## 7. Hearing it on the S-4
 
-**Play on S-4** sends the preview through the S-4 itself, so you hear its real effects and mixer.
+**Play on** in the toolbar chooses where the preview plays:
 
-1. On the S-4, set the MATERIAL of all four tracks to **BYPASS**. A track in BYPASS plays whatever arrives on its USB input.
-2. Open **Play on S-4** in the toolbar and choose **Play on the S-4**.
-3. Under **Sound goes to**, choose the S-4 (the browser asks for the microphone once, just to show device names).
-4. Press play.
+- **The S-4 › Its tracks:** each track plays into its own S-4 track, so you hear the S-4's real effects and mixer. First set the MATERIAL of all four tracks to **BYPASS** on the S-4: a track in BYPASS plays whatever arrives on its USB input. **Send each scene's effects over MIDI**, in the same menu, sends GRANULAR, FILTER, COLOR and SPACE whenever a scene starts.
+- **The S-4 › Its main out:** the mix as you hear it in the browser, straight out of the S-4. No BYPASS needed.
+- **This computer:** your speakers, headphones or any other output.
 
-Nothing? Use **Beep on T1…T4** to check each track. If the beeps land on the wrong tracks, switch how the browser numbers the S-4's USB inputs in the same menu.
+The first time, the browser may ask for the microphone, only so it can show the outputs' names.
 
-**Also send each scene's effect settings over MIDI** sends GRANULAR, FILTER, COLOR and SPACE to the S-4 whenever a scene starts.
+Nothing from the S-4? While the preview plays on it, **Test** in the menu beeps on T1 to T4 and then the main out. If the beeps land on the wrong tracks, choose the other channel order below it.
 
-If the S-4 is your computer's default output, system sounds go there too, and a sound that stops abruptly can leave the S-4 buzzing on track 1. Keep your speakers as the default and choose the S-4 under Sound goes to.
+Keep your speakers, not the S-4, as the computer's default output: system sounds would go to the S-4 too, and a sound that stops abruptly can leave it buzzing on track 1.
 
 ---
 
@@ -312,7 +311,7 @@ The sliders button at the top right.
 
 **No click in the pre-click.** The default output may be the S-4 itself. Choose your speakers or headphones in the pre-click menu, or the click on the S-4.
 
-**Play on S-4 is silent.** The tracks' MATERIAL must be in BYPASS and the output must be the S-4. Use the beeps to check each track.
+**Nothing on the S-4's tracks.** Their MATERIAL must be in BYPASS. **Test** in the Play on menu beeps on each track.
 
 **A sample says Missing.** This browser no longer has the file, because the site data was cleared or the project came from somewhere else. Drop the file on its lane again.
 
@@ -327,7 +326,7 @@ The sliders button at the top right.
 - **Change devices, modulator types or routings over MIDI**, or truly bypass a device. Build writes all of these into the project file instead.
 - **Record a single track.** Chrome passes on only the main pair of the S-4's USB channels.
 - **Catch the very start on the S-4.** A take on the S-4 started by sound begins about 45 ms late; record to the PC to keep everything.
-- **Sound exactly like the S-4 in the browser.** The preview leaves out the effects, sends and modulators. Play on S-4 adds the effects (sent over MIDI); sends and modulators need the export.
+- **Sound exactly like the S-4 in the browser.** The preview leaves out the effects, sends and modulators. Playing on the S-4's tracks adds the effects (sent over MIDI); sends and modulators need the export.
 - **Keep your work outside this browser** unless you back it up.
 
 ---

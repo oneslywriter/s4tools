@@ -16,38 +16,53 @@
   A.posToDb = p => (p >= 0.5 ? (p - 0.5) * 12 : Math.max(-96, 40 * Math.log10(Math.max(p, 1e-6) / 0.5)));
   A.dbToPos = db => (db >= 0 ? 0.5 + db / 12 : db <= -95 ? 0 : 0.5 * Math.pow(10, db / 40));
 
-  // The app's own output: four chains (input > FLTR > PAN > LVL) mixed to the default device. Hardware
-  // preview (hwpreview.js) swaps in its own context and chains with A.useOutput while it is on.
+  // The app's own mix: four chains (input > FLTR > PAN > LVL) into one stereo gain. A.context plays it on this
+  // computer (A.sinkId: the output chosen under Play on, '' the default); hwpreview.js swaps in its own context
+  // with A.useOutput to play on the S-4 (its tracks, or this same mix on its main out).
+  A.sinkId = '';
+  A.makeChains = function (ctx) {
+    const out = ctx.createGain(), chains = [];
+    out.gain.value = 0.9;
+    for (let i = 0; i < 4; i++) {
+      const input = ctx.createGain(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      // the S-4's pan (A.panGains): a gain per side, mono sources upmixed to both
+      input.channelCount = 2; input.channelCountMode = 'explicit'; input.channelInterpretation = 'speakers';
+      const split = ctx.createChannelSplitter(2), merge = ctx.createChannelMerger(2);
+      const p = { L: ctx.createGain(), R: ctx.createGain() };
+      f.type = 'lowpass'; f.frequency.value = 22000; f.Q.value = 0.8;
+      input.connect(f); f.connect(split);
+      split.connect(p.L, 0); split.connect(p.R, 1);
+      p.L.connect(merge, 0, 0); p.R.connect(merge, 0, 1);
+      merge.connect(g); g.connect(out);
+      chains.push({ input, f, p, g });
+    }
+    return { chains, out };
+  };
   A.context = function () {
     if (!A.appOut) {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const out = ctx.createGain(), chains = [];
-      out.gain.value = 0.9;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      let ctx;
+      try { ctx = A.sinkId ? new AC({ sinkId: A.sinkId }) : new AC(); } catch (e) { ctx = new AC(); } // the chosen output is gone
+      const { chains, out } = A.makeChains(ctx);
       out.connect(ctx.destination);
-      for (let i = 0; i < 4; i++) {
-        const input = ctx.createGain(), f = ctx.createBiquadFilter(), g = ctx.createGain();
-        // the S-4's pan (A.panGains): a gain per side, mono sources upmixed to both
-        input.channelCount = 2; input.channelCountMode = 'explicit'; input.channelInterpretation = 'speakers';
-        const split = ctx.createChannelSplitter(2), merge = ctx.createChannelMerger(2);
-        const p = { L: ctx.createGain(), R: ctx.createGain() };
-        f.type = 'lowpass'; f.frequency.value = 22000; f.Q.value = 0.8;
-        input.connect(f); f.connect(split);
-        split.connect(p.L, 0); split.connect(p.R, 1);
-        p.L.connect(merge, 0, 0); p.R.connect(merge, 0, 1);
-        merge.connect(g); g.connect(out);
-        chains.push({ input, f, p, g });
-      }
       A.appOut = { ctx, chains, out };
     }
     if (!A.ctx) A.useOutput(null);
     return A.ctx;
+  };
+  // the output on this computer the app's own mix plays on ('' the default)
+  A.setSink = async function (id) {
+    A.sinkId = id || '';
+    if (A.appOut && A.appOut.ctx.setSinkId) {
+      try { await A.appOut.ctx.setSinkId(A.sinkId); } catch (e) { /* gone: it stays where it was */ }
+    }
   };
   // o: { ctx, chains, out } to play through, or null for the app's own output. Chains marked hw only
   // apply mute/solo and the device LEVEL; the hardware does the mixing.
   A.useOutput = function (o) {
     if (A.ctx) { A.stop(); A.stopHear(); }
     const t = o || A.appOut || { ctx: null, chains: [], out: null }; // no app output yet: A.context() makes it
-    A.ctx = t.ctx; A.chains = t.chains; A.out = t.out; A.hw = !!o;
+    A.ctx = t.ctx; A.chains = t.chains; A.out = t.out; A.hw = !!(o && o.chains.some(c => c.hw));
     S4.emit('audio-output');
   };
   A.resume = function () {

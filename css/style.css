@@ -115,6 +115,8 @@ body[data-view="live"] .only-build, body[data-view="build"] .only-live { display
 .hw.on { background: var(--ok); border-color: var(--ok); color: var(--on-accent); }
 .hw .dot { background: var(--faint); }
 .hw.on .dot { background: var(--on-accent); }
+.hw.on .lbl { color: var(--on-accent); }
+.hw-where { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* learn bar */
 #listenBar { flex: none; display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 16px; background: var(--learn); color: var(--on-accent); }

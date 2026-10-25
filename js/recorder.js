@@ -192,7 +192,7 @@
   }
 
   // ---------- pre-click ----------
-  // The click: on this computer (an output picked here), on the S-4 (the USB pair of its main out, as Play on S-4
+  // The click: on this computer (an output picked here), on the S-4 (the USB pair of its main out, as Play on
   // numbers them), or none. Each pre-click opens its own audio connection (one kept open between pre-clicks landed
   // the S-4's bar 1 about 20 ms later on average, measured 2026-10-22). The stream to the S-4 starts and ends with
   // silence, so the S-4 doesn't keep replaying a piece of click (it loops the last 1024 samples it got).

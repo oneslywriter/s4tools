@@ -115,8 +115,9 @@
     bar.bpm = h('span', { class: 'bpm-val', title: 'Tempo of the project. Click to type it, or scroll.', onclick: editBpm });
     bar.bpm.addEventListener('wheel', e => { e.preventDefault(); setBpm(CR.proj.bpm + (e.deltaY < 0 ? 1 : -1) * (e.shiftKey ? 10 : 1)); }, { passive: false });
     bar.key = h('button', { class: 'btn', title: 'Key of the project: loops whose key is known can be moved into it', onclick: e => keyMenu(e.currentTarget) });
-    bar.hw = h('button', { class: 'btn hw', title: 'Play on S-4: the scenes play through the S-4 itself, its tracks in BYPASS, so you hear its own effects and mixer', onclick: e => hwMenu(e.currentTarget) },
-      h('span', { class: 'dot' }), 'Play on S-4', S4.icon('chev'));
+    bar.where = h('span', { class: 'hw-where' });
+    bar.hw = h('button', { class: 'btn hw', title: 'Where the preview plays: the S-4\'s tracks (through its own effects), its main out, or an output on this computer', onclick: e => playMenu(e.currentTarget) },
+      h('span', { class: 'dot' }), h('span', { class: 'lbl' }, 'Play on'), bar.where, S4.icon('chev'));
     tb.append(
       h('button', { class: 'btn', onclick: e => projectMenu(e.currentTarget) }, S4.icon('folder'), 'Project', S4.icon('chev')),
       bar.name,
@@ -145,45 +146,50 @@
     bar.loop.classList.toggle('on', !!CR.proj.loop);
     bar.bpm.textContent = CR.proj.bpm;
     bar.key.replaceChildren(CR.proj.key === 'NONE' ? 'None' : CR.proj.key, S4.icon('chev'));
-    bar.hw.classList.toggle('on', S4.hw.on);
+    const HW = S4.hw;
+    bar.hw.classList.toggle('on', HW.mode !== 'here');
+    bar.where.textContent = HW.mode === 'tracks' ? 'S-4 tracks' : HW.mode === 'main' ? 'S-4 main out'
+      : HW.settings.hereId ? outputName(HW.settings.hereLabel) || 'an output here' : 'This computer';
   }
 
-  // ---------- Play on S-4 (hwpreview.js) ----------
-  function hwMenu(anchor) {
-    const HW = S4.hw, on = HW.on;
+  // ---------- Play on (hwpreview.js): the S-4's tracks, its main out, or an output on this computer ----------
+  const outputName = label => (label || '').replace(/^Default - /, '').replace(/\s*\([0-9a-f]{4}:[0-9a-f]{4}\)$/i, '');
+  async function playMenu(anchor) {
+    const HW = S4.hw, mode = HW.mode;
+    let outs = [];
+    try { outs = await HW.listOutputs(false); } catch (e) { /* none listed */ }
+    const named = outs.some(d => d.label), def = outs.find(d => d.deviceId === 'default');
+    const s4There = !named || outs.some(d => HW.looksLikeS4(d.label));
+    // (without names, the browser lists outputs without ids either: nothing to choose)
+    // (the default is listed once more under its own name: one entry)
+    const here = outs.filter(d => d.deviceId && d.deviceId !== 'default' && !HW.looksLikeS4(d.label) && !(def && outputName(def.label) === outputName(d.label)));
+    const go = (m, dev) => async () => {
+      try {
+        await HW.playOn(m, dev);
+        if (m === 'tracks') S4.toast('Playing on the S-4\'s tracks. Set all four to BYPASS: each plays its own USB input through the S-4\'s effects and mixer.');
+        if (m === 'main') S4.toast('Playing on the S-4\'s main out: the mix as you hear it here.');
+      } catch (e) { S4.toast(e.message, 'err'); }
+    };
+    const s4hint = s4There ? null : 'not connected';
     S4.menu(anchor, [
-      { head: on ? 'Playing on the S-4' : 'Playing here, in the browser' },
-      { label: on ? 'Play here instead' : 'Play on the S-4', action: toggleHw },
-      { label: 'Sound goes to: ' + (HW.settings.sinkId ? HW.settings.sinkLabel || 'the chosen output' : 'the default output'), hint: 'change', action: () => chooseHwOutput(anchor) },
-      { sep: true },
-      { head: 'How this browser numbers the S-4\'s USB inputs' },
-      ...Object.entries(HW.ORDERS).map(([k, o]) => ({ label: o.label, checked: HW.order() === k, action: () => HW.setOrder(k) })),
-      { head: on ? 'Check the routing (tracks in BYPASS)' : 'Checks: switch Play on S-4 on first' },
-      ...[0, 1, 2, 3].map(t => ({ label: `Beep on T${t + 1}`, disabled: !on, action: () => HW.test(t) })),
-      { label: 'Beep on the main out', disabled: !on, action: () => HW.test('master') },
-      { sep: true },
-      { label: 'Also send each scene\'s effect settings over MIDI', hint: 'GRANULAR FILTER COLOR SPACE', checked: HW.settings.pushFx, action: () => HW.setPushFx(!HW.settings.pushFx) },
+      { head: 'The S-4' },
+      { label: 'Its tracks', hint: s4hint || 'through its own effects', checked: mode === 'tracks', disabled: !s4There, action: go('tracks') },
+      { label: 'Its main out', hint: s4hint || 'the mix as heard here', checked: mode === 'main', disabled: !s4There, action: go('main') },
+      { head: 'This computer' },
+      { label: def && def.label ? outputName(def.label) : 'The default output', hint: def && HW.looksLikeS4(def.label) ? 'the S-4: its track 1' : 'default', checked: mode === 'here' && !HW.settings.hereId, action: go('here', null) },
+      ...here.map(d => ({ label: outputName(d.label) || 'Output without a name', checked: mode === 'here' && HW.settings.hereId === d.deviceId, action: go('here', d) })),
+      ...(named ? [] : [{ label: 'Show every output by name', hint: 'the browser asks for the microphone once', action: async () => {
+        try { await HW.listOutputs(true); } catch (e) { return S4.toast('The outputs could not be named: ' + e.message, 'err'); }
+        playMenu(anchor);
+      } }]),
+      ...(mode === 'here' ? [] : [
+        { sep: true },
+        ...(mode === 'tracks' ? [{ label: 'Send each scene\'s effects over MIDI', hint: 'GRANULAR FILTER COLOR SPACE', checked: HW.settings.pushFx, action: () => HW.setPushFx(!HW.settings.pushFx) }] : []),
+        { label: mode === 'tracks' ? 'Test: a beep on T1 to T4, then the main out' : 'Test: a beep on the main out', action: () => HW.testAll() },
+        { head: 'If the beeps land on the wrong tracks' },
+        ...Object.entries(HW.ORDERS).map(([k, o]) => ({ label: o.label, checked: HW.order() === k, action: () => HW.setOrder(k) })),
+      ]),
     ]);
-  }
-  async function toggleHw() {
-    const was = S4.hw.on;
-    try {
-      await S4.hw.toggle();
-      if (!was) S4.toast('Playing on the S-4. Set its four tracks to BYPASS: each then plays its own USB input through the S-4\'s effects and mixer.');
-    } catch (e) { S4.toast(e.message, 'err'); }
-  }
-  async function chooseHwOutput(anchor) {
-    try {
-      const outs = await S4.hw.listOutputs(true);
-      S4.menu(anchor, [
-        { head: 'Where Play on S-4 sends the sound' },
-        { label: 'The default output', checked: !S4.hw.settings.sinkId, action: () => S4.hw.setOutput(null) },
-        ...outs.filter(d => d.deviceId !== 'default').map(d => ({
-          label: d.label || 'Output without a name', hint: S4.hw.looksLikeS4(d.label) ? 'S-4' : '',
-          checked: d.deviceId === S4.hw.settings.sinkId, action: () => S4.hw.setOutput(d),
-        })),
-      ]);
-    } catch (e) { S4.toast('The audio outputs could not be listed: ' + e.message, 'err'); }
   }
 
   function togglePlay() {
@@ -1245,7 +1251,7 @@
   // value over at the same knob position. The hardware preview can't switch modes (MIDI has no way to).
   function modeLabel(tr, i, fr, sp, mode) {
     const cur = P.modeOf(sp, mode);
-    const b = h('button', { class: 'gridsel', title: `${sp.label} mode on the S-4, exported. MIDI can't change modes, so Play on S-4 uses whatever the S-4 has.` },
+    const b = h('button', { class: 'gridsel', title: `${sp.label} mode on the S-4, exported. MIDI can't change modes, so playing on the S-4's tracks uses whatever the S-4 has.` },
       cur ? cur.label : mode.toUpperCase());
     b.addEventListener('pointerdown', e => e.stopPropagation());
     b.addEventListener('click', ev => {
@@ -1385,7 +1391,7 @@
   const TABS = [['sample', 'Sample'], ['fx', 'Effects'], ['sends', 'Sends'], ['mods', 'Mods']];
   let lastFx = 'granular';
   const HELP = 'Values are in the S-4\'s own units. Click a value to type it, Shift-drag for fine moves, double-click for the default. '
-    + 'Play on S-4 sends the nearest of the 128 MIDI steps; the export writes the exact value.';
+    + 'Playing on the S-4\'s tracks sends the nearest of the 128 MIDI steps; the export writes the exact value.';
 
   function renderInsp() {
     inspEl.innerHTML = '';
