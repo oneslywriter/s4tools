@@ -41,7 +41,7 @@ jobs:
         run: |
           mkdir -p site/docs
           cp -r index.html css js LICENSE site/
-          cp docs/guide.html docs/GUIDE.md site/docs/
+          cp docs/guide.html docs/GUIDE.md docs/ghost-clips.html site/docs/
           cp deploy/htaccess site/.htaccess
           # the version: in index.html (what a page is) and version.json (what the site has now; uploaded last)
           v="${GITHUB_SHA::12}"

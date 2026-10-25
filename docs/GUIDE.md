@@ -317,6 +317,8 @@ The sliders button at the top right.
 
 **Export can't find the S-4.** Put it in USB storage mode, then use **Project › Choose the S-4 folder…** and pick PROJECTS again.
 
+**A clip you deleted on the S-4 keeps coming back.** The S-4 can leave a deleted clip's file in the project and load it again. [How to fix it](ghost-clips.html).
+
 ---
 
 ## 11. What it can't do

@@ -2,7 +2,7 @@
 
 Every push to `main` uploads the site to a web host over FTPS: [.github/workflows/deploy.yml](../.github/workflows/deploy.yml). It sends only what the site needs:
 - `index.html`, `css/` and `js/`;
-- `docs/guide.html` and `docs/GUIDE.md`;
+- `docs/guide.html`, `docs/GUIDE.md` and `docs/ghost-clips.html`;
 - `LICENSE`;
 - [htaccess](htaccess), uploaded as `.htaccess` (for Apache-style hosts);
 - `version.json`, the commit, which it also writes into `index.html`. It goes up last; a page left open checks it every few minutes and asks for a reload when the site has a newer version.

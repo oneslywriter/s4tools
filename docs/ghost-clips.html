@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>S-4 ghost clip fix</title>
+  <meta name="description" content="A deleted clip keeps coming back on the Torso S-4: why it happens, and how to move its leftover file out of the project by hand or with s4doctor.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 18 18%22%3E%3Crect x=%221%22 y=%221%22 width=%227%22 height=%227%22 rx=%222%22 fill=%22%23e4572e%22/%3E%3Crect x=%2210%22 y=%221%22 width=%227%22 height=%227%22 rx=%223.5%22 fill=%22%23c98a12%22/%3E%3Crect x=%221%22 y=%2210%22 width=%227%22 height=%227%22 rx=%223.5%22 fill=%22%2316907c%22/%3E%3Crect x=%2210%22 y=%2210%22 width=%227%22 height=%227%22 rx=%222%22 fill=%22%236a58c9%22/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../css/themes.css">
+  <script>
+    // the app's theme (Settings > Theme), before anything is drawn; "system" follows the OS
+    (function () {
+      const apply = () => {
+        let t = 'system';
+        try { t = JSON.parse(localStorage.getItem('s4tools.theme') || '"system"'); } catch (e) { /* the default */ }
+        document.documentElement.dataset.theme = t === 'system' || !t ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : t;
+      };
+      apply();
+      matchMedia('(prefers-color-scheme: dark)').addEventListener('change', apply);
+      addEventListener('storage', e => { if (e.key === 's4tools.theme') apply(); });
+    })();
+  </script>
+  <style>
+    /* the colours are the app's (css/themes.css), as in guide.html */
+    :root { --sans: 'IBM Plex Sans', ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif; --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink2); font: 16px/1.65 var(--sans); -webkit-font-smoothing: antialiased; }
+    header { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 16px;
+      background: var(--bg); border-bottom: 1px solid var(--rule); }
+    header a { color: var(--ink); text-decoration: none; }
+    .mark { display: inline-flex; align-items: center; gap: 9px; font-weight: 600; font-size: 18px; letter-spacing: -.01em; }
+    .mark svg { width: 20px; height: 20px; }
+    .mark span { color: var(--mute); font-weight: 500; }
+    header .sp { flex: 1; }
+    header .open { padding: 6px 14px; border: 1px solid var(--ink); border-radius: 6px; font-size: 14px; font-weight: 500; background: var(--ink); color: var(--bg); }
+    header .open:hover { opacity: .85; }
+    main { max-width: 760px; margin: 0 auto; padding: 28px 16px 96px; display: flex; flex-direction: column; gap: 34px; }
+    h1, h2 { color: var(--ink); text-wrap: balance; }
+    h1 { font-size: 34px; line-height: 1.15; letter-spacing: -.02em; margin: 12px 0 0; }
+    h2 { font-size: 23px; letter-spacing: -.01em; margin: 0 0 12px; padding-left: 12px; border-left: 4px solid var(--t1); }
+    section:nth-of-type(2) h2 { border-color: var(--t2); }
+    section:nth-of-type(3) h2 { border-color: var(--t3); }
+    .lede { margin: 12px 0 0; font-size: 18px; color: var(--ink); max-width: 64ch; }
+    p { margin: 10px 0; max-width: 68ch; }
+    a { color: var(--learn); }
+    strong { font-weight: 600; color: var(--ink); }
+    code, .file { font-family: var(--mono); font-size: .88em; }
+    code { padding: 1px 5px; border-radius: 4px; background: var(--card); border: 1px solid var(--rule); }
+    .file { color: var(--ink); font-weight: 500; }
+    .tree { margin: 12px 0; padding: 14px 16px; border-radius: 8px; background: var(--card); border: 1px solid var(--rule); overflow-x: auto;
+      font: 14px/1.7 var(--mono); white-space: pre; color: var(--ink2); }
+    .tree .dim { color: var(--mute); }
+    .tree .ghost { color: var(--on-t); background: var(--t4); border-radius: 3px; padding: 0 4px; font-weight: 500; }
+    .tree .note { color: var(--ink); }
+    ol.steps { margin: 12px 0 0; padding: 0; list-style: none; counter-reset: step; display: flex; flex-direction: column; gap: 12px; }
+    ol.steps > li { counter-increment: step; display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; }
+    ol.steps > li::before { content: counter(step); width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--rule); background: var(--card);
+      color: var(--mute); font: 600 13px/24px var(--mono); text-align: center; }
+    ol.steps > li > div { min-width: 0; padding-top: 1px; }
+    .cmd { display: flex; margin-top: 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--card); overflow: hidden; }
+    .cmd code { flex: 1; min-width: 0; padding: 9px 12px; border: 0; border-radius: 0; background: none; overflow-x: auto; white-space: pre; font-size: 13.5px; }
+    .cmd button { flex: none; border: 0; border-left: 1px solid var(--rule); background: transparent; color: var(--ink2); font: 500 13px var(--sans); padding: 0 12px; cursor: pointer; }
+    .cmd button:hover { color: var(--ink); }
+    a:focus-visible, button:focus-visible { outline: 2px solid var(--learn); outline-offset: 2px; }
+    .aside { margin-top: 16px; padding: 12px 16px; border-radius: 8px; background: var(--card); border: 1px solid var(--rule); }
+    .aside p { margin: 6px 0; }
+    footer { border-top: 1px solid var(--rule); padding-top: 14px; color: var(--mute); font-size: 14px; }
+    footer p { margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="mark" href="../" title="Open s4tools">
+      <svg viewBox="0 0 18 18" aria-hidden="true"><rect x="1" y="1" width="7" height="7" rx="2" fill="var(--t1)"/><rect x="10" y="1" width="7" height="7" rx="3.5" fill="var(--t2)"/><rect x="1" y="10" width="7" height="7" rx="3.5" fill="var(--t3)"/><rect x="10" y="10" width="7" height="7" rx="2" fill="var(--t4)"/></svg>
+      s4tools <span>fix</span>
+    </a>
+    <span class="sp"></span>
+    <a class="open" href="../">Open s4tools</a>
+  </header>
+  <main>
+    <div>
+      <h1>A deleted clip keeps coming back on the S-4</h1>
+      <p class="lede">You delete a track's sample on the Torso S-4 and save. The next time the project loads, or you return to that scene, the clip is back. Settings save fine; only the audio returns.</p>
+    </div>
+
+    <section>
+      <h2>Why it happens</h2>
+      <p>Deleting the sample removes its name from the project's <code>project.json</code>, but the audio file can stay in the project folder. The S-4 appears to find a track's audio by its file name, built from the scene and track number, so it loads the leftover file again.</p>
+      <div class="tree" role="img" aria-label="A project folder with a leftover audio file for scene 7, track 1"><span class="dim">PROJECTS/</span>
+└─ MY SONG.s4project/
+   ├─ project.json      <span class="dim">scene 7, track 1: no sample (deleted)</span>
+   ├─ discs/
+   │  ├─ scene1_track1.wav
+   │  └─ <span class="ghost">scene7_track1.wav</span>  <span class="note">← left behind, loaded again</span>
+   └─ tapes/</div>
+      <p>A DISC track's file is <span class="file">discs/scene&lt;N&gt;_track&lt;T&gt;.wav</span>; a POLY track's is <span class="file">tapes/scene&lt;N&gt;_track&lt;T&gt;_poly.wav</span>. TAPE recordings are stored differently and aren't part of this.</p>
+    </section>
+
+    <section>
+      <h2>Fix it by hand</h2>
+      <ol class="steps">
+        <li><div>Put the S-4 in USB storage mode. Its drive appears on your computer.</div></li>
+        <li><div>Back up: copy the project's folder, <span class="file">PROJECTS/&lt;NAME&gt;.s4project</span>, to your computer.</div></li>
+        <li><div>Find the file for the scene and track that keeps coming back. Scene 7, track 1 on a DISC is <span class="file">discs/scene7_track1.wav</span>.</div></li>
+        <li><div>Move that file out of the project folder, onto your computer. Keep it until you've checked the result.</div></li>
+        <li><div>Eject the drive, leave storage mode and restart the S-4.</div></li>
+        <li><div>Load the project and go to that scene. The track should stay empty. If you turned it all the way down as a workaround, turn it back up and save.</div></li>
+      </ol>
+      <div class="aside">
+        <p><strong>One check first.</strong> With KEEP SAMPLE on, a track in another scene can play this same file. If that track still needs it, leave the file where it is. The tool below checks this for you.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Fix it with s4doctor</h2>
+      <p><a href="https://github.com/oneslywriter/s4tools/blob/main/tools/s4doctor.py">s4doctor.py</a> is a small Python 3 script, nothing to install. It reads every project, lists the leftover files, and only moves the ones no track still uses. It never deletes anything.</p>
+      <ol class="steps">
+        <li><div>Download <a href="https://raw.githubusercontent.com/oneslywriter/s4tools/main/tools/s4doctor.py">s4doctor.py</a> and open a terminal in the folder you saved it to.</div></li>
+        <li><div>Put the S-4 in USB storage mode.</div></li>
+        <li><div>See what it finds. Use the drive letter or name your computer gives the S-4 (on a Mac, <code>python3</code> and a path under <code>/Volumes</code>):
+          <div class="cmd"><code id="c1">python s4doctor.py "D:/PROJECTS"</code><button type="button" data-copy="c1">Copy</button></div></div></li>
+        <li><div>Move the leftovers into a folder on your computer. Each file's original place is written to <span class="file">moved.txt</span> in that folder:
+          <div class="cmd"><code id="c2">python s4doctor.py "D:/PROJECTS" --move-to "C:/s4-moved"</code><button type="button" data-copy="c2">Copy</button></div></div></li>
+        <li><div>Run step 3 again. It should report <code>0 ghost files</code>.</div></li>
+        <li><div>Eject the drive, leave storage mode, restart the S-4 and check the scene.</div></li>
+      </ol>
+      <div class="aside">
+        <p><strong>To undo,</strong> copy a file back to the place listed in <span class="file">moved.txt</span>, with the S-4 in storage mode.</p>
+        <p><strong>To keep one,</strong> point the tool at a single project (<code>"D:/PROJECTS/MY SONG.s4project"</code>) or move just the files you want by hand: it moves every leftover it finds in the folders you give it.</p>
+      </div>
+    </section>
+
+    <footer>
+      <p>Seen on the S-4 with OS 2.x. The script also lists audio files that no track points at, for information.</p>
+      <p>Part of <a href="../">s4tools</a>, an independent project, not affiliated with Torso Electronics.</p>
+    </footer>
+  </main>
+  <script>
+    document.querySelectorAll('button[data-copy]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const code = document.getElementById(btn.dataset.copy);
+        const say = t => { btn.textContent = t; setTimeout(() => { btn.textContent = 'Copy'; }, 1500); };
+        const select = () => { const r = document.createRange(); r.selectNodeContents(code); const s = getSelection(); s.removeAllRanges(); s.addRange(r); say('Selected'); };
+        try { navigator.clipboard.writeText(code.textContent).then(() => say('Copied'), select); } catch (e) { select(); }
+      });
+    });
+  </script>
+</body>
+</html>
